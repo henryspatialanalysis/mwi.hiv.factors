@@ -9,6 +9,8 @@ Description: |>
     Malawi.
 Depends:
     R (>= 4.1.0)
+Suggests:
+    versioning
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
