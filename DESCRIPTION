@@ -1,0 +1,17 @@
+Package: mwi.hiv.factors
+Title: HIV Contextual Factors in Malawi
+Version: 0.0.1
+Authors@R:
+    person("Nathaniel", "Henry", email = "nat@henryspatialanalysis.com",
+        role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8150-4988"))
+Description: |>
+    Identify contextual factors influencing differences in HIV viraemia across
+    Malawi.
+Depends:
+    R (>= 4.1.0)
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+URL: https://henryspatialanalysis.github.io/mwi.hiv.factors/
+BugReports: https://github.com/henryspatialanalysis/mwi.hiv.factors/issues

@@ -1,0 +1,6 @@
+directories:
+  repo:
+    versioned: FALSE
+    path: '~/repos/mwi.hiv.factors'
+    files:
+      config: 'config.yaml'
