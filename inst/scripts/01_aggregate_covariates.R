@@ -83,6 +83,9 @@ for(cov_name in cov_names){
     method = ifelse(cov_name == 'population_1km', 'sum', 'weighted.mean'),
     weighting_raster = pop
   )
+  if(cov_name %in% config$get('log_transformed')){
+    cov_tables[[cov_name]]$data <- log1p(cov_tables[[cov_name]]$data)
+  }
   data.table::setnames(cov_tables[[cov_name]], old = 'data', new = cov_name)
 }
 
