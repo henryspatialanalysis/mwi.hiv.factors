@@ -10,12 +10,15 @@ covariates:
   precipitation: "Precipitation"
   temperature: "Yearly average temperature (Kelvin)"
   ntl: "Nighttime light intensity"
+  log_population_1km: "Population density (log-transformed)"
+  log_ntl: "Nighttime light intensity (log-transformed)"
+log_transformed: ['log_population_1km', 'log_ntl']
 versions:
   h3_setup: 'TODO'
   catchments: '20240909-192904-3085d3f3'
   splitting: '20250429-214505-9ef0a8a2'
-  prepared_data: '2025-05-26'
-  analysis: '2025-05-26'
+  prepared_data: '2025-05-27'
+  analysis: '2025-05-27'
 directories:
   repo:
     versioned: FALSE
@@ -36,6 +39,7 @@ directories:
     path: '~/repos/respond-map-prep/archive/assign_catchments'
     files:
       facility_catchments: 'artefacts/facility_catchments.gpkg'
+      admin_bounds: 'artefacts/mwi_areas_ta.geojson'
   splitting:
     versioned: TRUE
     path: '~/repos/respond-map-prep/archive/split_model_results'
@@ -54,6 +58,8 @@ directories:
       temperature: "mwi_tavg_2023_tlst_100m_v1.tif"
       ntl: "mwi_viirs_nvf_2023_100m_v1.tif"
       population_1km: "mwi_ppp_2020_1km_Aggregated.tif"
+      log_ntl: "mwi_viirs_nvf_2023_100m_v1.tif"
+      log_population_1km: "mwi_ppp_2020_1km_Aggregated.tif"
   raster_db:
     versioned: FALSE
     path: '~/temp_data/rr'
@@ -66,6 +72,9 @@ directories:
       id_raster: 'id_raster.tif'
       aggregation_table: 'aggregation_table.csv'
       covariates_by_catchment: 'covariates_by_catchment.csv'
+      covariates_viz: "covariates_by_catchment.pdf"
+      covariates_viz_no_metros: "covariates_by_catchment_no_metros.pdf"
+      covariates_viz_by_district: "covariates_by_catchment_by_district.pdf"
   analysis:
     versioned: TRUE
     path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Analysis'
