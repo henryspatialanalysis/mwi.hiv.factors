@@ -1,6 +1,72 @@
+catchments_id_field: 'catchment_id'
+covariates:
+  population_1km: "Population density"
+  evi: "Enhanced vegetation index"
+  tt_motorized: "Travel time to healthcare (motorized)"
+  tt_walking: "Travel time to healthcare (walking)"
+  altitude: "Altitude"
+  built_surface: "Density of built structures"
+  highways: "Distance to major roads"
+  precipitation: "Precipitation"
+  temperature: "Yearly average temperature (Kelvin)"
+  ntl: "Nighttime light intensity"
+versions:
+  h3_setup: 'TODO'
+  catchments: '20240909-192904-3085d3f3'
+  splitting: '20250429-214505-9ef0a8a2'
+  prepared_data: '2025-05-26'
+  analysis: '2025-05-26'
 directories:
   repo:
     versioned: FALSE
     path: '~/repos/mwi.hiv.factors'
     files:
       config: 'config.yaml'
+  h3_setup:
+    versioned: TRUE
+    path: '~/repos/respond-map-prep/archive/h3_setup'
+    files:
+      id_raster: 'artefacts/id_raster.tif'
+      pop_raster: 'artefacts/population_raster.tif'
+      h3_aggregation_table: 'artefacts/h3_aggregation_table.csv'
+      h3_centers: 'artefacts/h3_centers.csv'
+      h3_polys: 'artefacts/h3_boundaries.gpkg'
+  catchments:
+    versioned: TRUE
+    path: '~/repos/respond-map-prep/archive/assign_catchments'
+    files:
+      facility_catchments: 'artefacts/facility_catchments.gpkg'
+  splitting:
+    versioned: TRUE
+    path: '~/repos/respond-map-prep/archive/split_model_results'
+    files:
+      aggregated_results: 'artefacts/aggregate_summary_table.csv'
+  raw_data:
+    versioned: FALSE
+    path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Datasets/original_raster_data'
+    files:
+      tt_motorized: "202001_Global_Motorized_Travel_Time_to_Healthcare_MWI.tif"
+      tt_walking: "202001_Global_Walking_Only_Travel_Time_To_Healthcare_MWI.tif"
+      altitude: "altitude.tif"
+      built_surface: "mwi_built_S_GHS_U_wFGW_100m_v1_2024.tif"
+      highways: "mwi_highway_dist_osm_2023_100m_v1.tif"
+      precipitation: "mwi_ppt_2023_yravg_tc_100m_v1.tif"
+      temperature: "mwi_tavg_2023_tlst_100m_v1.tif"
+      ntl: "mwi_viirs_nvf_2023_100m_v1.tif"
+      population_1km: "mwi_ppp_2020_1km_Aggregated.tif"
+  raster_db:
+    versioned: FALSE
+    path: '~/temp_data/rr'
+    files:
+      evi: 'evi/evi_mean_1y_2021_00_00.tif'
+  prepared_data:
+    versioned: TRUE
+    path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Datasets/cleaned_data'
+    files:
+      id_raster: 'id_raster.tif'
+      aggregation_table: 'aggregation_table.csv'
+      covariates_by_catchment: 'covariates_by_catchment.csv'
+  analysis:
+    versioned: TRUE
+    path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Analysis'
+    files: ~
