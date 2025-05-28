@@ -1,4 +1,5 @@
 catchments_id_field: 'catchment_id'
+top_catchments_pct: 0.33
 covariates:
   population_1km: "Population density"
   evi: "Enhanced vegetation index"
@@ -12,6 +13,17 @@ covariates:
   ntl: "Nighttime light intensity"
   log_population_1km: "Population density (log-transformed)"
   log_ntl: "Nighttime light intensity (log-transformed)"
+pca_covariates:
+  evi: "EVI"
+  tt_motorized: "Travel time (vehicle)"
+  tt_walking: "Travel time (walking)"
+  altitude: "Altitude"
+  built_surface: "Built structures"
+  highways: "Roads"
+  precipitation: "Precipitation"
+  temperature: "Temperature"
+  log_population_1km: "Population density"
+  log_ntl: "Nighttime lights"
 log_transformed: ['log_population_1km', 'log_ntl']
 versions:
   h3_setup: 'TODO'
@@ -78,4 +90,6 @@ directories:
   analysis:
     versioned: TRUE
     path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Analysis'
-    files: ~
+    files:
+      pca_importance: "pca_importance.png"
+      pca_loadings: "pca_loadings.png"
