@@ -13,6 +13,7 @@ covariates:
   ntl: "Nighttime light intensity"
   log_population_1km: "Population density (log-transformed)"
   log_ntl: "Nighttime light intensity (log-transformed)"
+  rwi: "Relative wealth index"
 pca_covariates:
   evi: "EVI"
   tt_motorized: "Travel time (vehicle)"
@@ -24,13 +25,14 @@ pca_covariates:
   temperature: "Temperature"
   log_population_1km: "Population density"
   log_ntl: "Nighttime lights"
+  rwi: "Relative wealth index"
 log_transformed: ['log_population_1km', 'log_ntl']
 versions:
   h3_setup: 'TODO'
   catchments: '20240909-192904-3085d3f3'
   splitting: '20250429-214505-9ef0a8a2'
   prepared_data: '2025-05-27'
-  analysis: '2025-05-27'
+  analysis: '2025-06-09'
 directories:
   repo:
     versioned: FALSE
@@ -61,6 +63,8 @@ directories:
     versioned: FALSE
     path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Datasets/original_raster_data'
     files:
+      rwi_raw: "mwi_relative_wealth_index.csv"
+      rwi: "mwi_rwi.tif"
       tt_motorized: "202001_Global_Motorized_Travel_Time_to_Healthcare_MWI.tif"
       tt_walking: "202001_Global_Walking_Only_Travel_Time_To_Healthcare_MWI.tif"
       altitude: "altitude.tif"
@@ -93,3 +97,7 @@ directories:
     files:
       pca_importance: "pca_importance.png"
       pca_loadings: "pca_loadings.png"
+      pca_loadings_pt2: "pca_loadings_pt2.png"
+      kmeans_wss: "kmeans_wss.png"
+      kmeans_detail_template: "kmeans_detail_{k}_means.png"
+      kmeans_map_template: "kmeans_map_{k}_means.png"
