@@ -131,7 +131,7 @@ ggplot2::ggplot(sum_squares_table, ggplot2::aes(x = k, y = sum_squares, color = 
   ggplot2::geom_point() +
   ggplot2::geom_vline(xintercept = 5, linetype = 2) +
   ggplot2::geom_vline(xintercept = c(3, 8), linetype = 3) +
-  ggplot2::scale_y_continuous(limits = c(0, max(wss_table$wss))) +
+  ggplot2::scale_y_continuous(limits = c(0, max(sum_squares_table$sum_squares))) +
   ggplot2::scale_x_continuous(breaks = seq_len(max_k)) +
   ggplot2::labs(
     x = 'Number of clusters',
@@ -197,3 +197,15 @@ for(k in c(3, 4, 5, 8)){
   print(map_fig)
   dev.off()
 }
+
+## Save results ------------------------------------------------------------------------->
+
+pca_loadings <- pca_model$scores |> as.data.table()
+colnames(pca_loadings) <- paste0('pc', seq_len(ncol(pca_loadings)))
+
+full_data <- cbind(top_catchments, pca_loadings)
+for(k in seq_len(max_k)){
+  full_data[[paste0('kmeans_', k)]] <- kmeans_models[[k]]$cluster
+}
+
+config$write(full_data, 'analysis', 'pca_kmeans_results')
