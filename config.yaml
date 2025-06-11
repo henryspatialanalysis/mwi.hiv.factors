@@ -14,6 +14,10 @@ covariates:
   log_population_1km: "Population density (log-transformed)"
   log_ntl: "Nighttime light intensity (log-transformed)"
   rwi: "Relative wealth index"
+  distance_admarc: "Distance to ADMARC facilities"
+  distance_border_posts: "Distance to border posts"
+  distance_towns: "Distance to towns (population > 20k)"
+  distance_borders: "Distance to national borders"
 pca_covariates:
   evi: "EVI"
   tt_motorized: "Travel time (vehicle)"
@@ -26,6 +30,10 @@ pca_covariates:
   log_population_1km: "Population density"
   log_ntl: "Nighttime lights"
   rwi: "Relative wealth index"
+  distance_admarc: "Distance to ADMARC facilities"
+  distance_border_posts: "Distance to border posts"
+  distance_towns: "Distance to towns (population > 20k)"
+  distance_borders: "Distance to national borders"
 log_transformed: ['log_population_1km', 'log_ntl']
 versions:
   h3_setup: 'TODO'
@@ -59,12 +67,24 @@ directories:
     path: '~/repos/respond-map-prep/archive/split_model_results'
     files:
       aggregated_results: 'artefacts/aggregate_summary_table.csv'
+  raw_vectors:
+    versioned: FALSE
+    path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Datasets/original_vector_data'
+    files:
+      admarc: 'LSMS_2019/admarc_locations.shp'
+      border_posts: 'LSMS_2019/BorderPosts.shp'
+      towns: 'LSMS_2019/Malawi_towns.shp'
+      town_populations: 'LSMS_2019/CityPopulation_c2018.xls'
   raw_data:
     versioned: FALSE
     path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Datasets/original_raster_data'
     files:
       rwi_raw: "mwi_relative_wealth_index.csv"
       rwi: "mwi_rwi.tif"
+      distance_admarc: "distance_admarc.tif"
+      distance_border_posts: "distance_border_posts.tif"
+      distance_towns: "distance_towns_over_20k.tif"
+      distance_borders: "distance_national_borders.tif"
       tt_motorized: "202001_Global_Motorized_Travel_Time_to_Healthcare_MWI.tif"
       tt_walking: "202001_Global_Walking_Only_Travel_Time_To_Healthcare_MWI.tif"
       altitude: "altitude.tif"
@@ -101,3 +121,4 @@ directories:
       kmeans_wss: "kmeans_wss.png"
       kmeans_detail_template: "kmeans_detail_{k}_means.png"
       kmeans_map_template: "kmeans_map_{k}_means.png"
+      pca_kmeans_results: 'pca_kmeans_results.csv'
