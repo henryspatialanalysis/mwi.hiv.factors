@@ -25,14 +25,33 @@ dir.create(config$get_dir_path('prepared_data'))
 
 # Load inputs
 pop <- config$read('raw_data', 'population_1km')
-facility_catchments <- config$read('catchments', 'facility_catchments')
+facility_catchments <- config$read('catchments', 'facility_catchments', quiet = TRUE)
 aggregate_results <- config$read('splitting', 'aggregated_results')
+admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
+
+
+## Assign metro vs. non-metro for each facility catchment ------------------------------->
+
+catchments_id_field <- config$get('catchments_id_field')
+facility_catchments[[catchments_id_field]] <- seq_len(nrow(facility_catchments))
+municipalities <- admin_bounds |>
+  dplyr::filter(area_level == 5L) |>
+  dplyr::filter(endsWith(area_name, ' City')) |>
+  dplyr::mutate(municipality = area_name) |>
+  dplyr::select(municipality)
+catchment_to_municipality <- facility_catchments |>
+  sf::st_point_on_surface() |>
+  sf::st_join(y = municipalities) |>
+  sf::st_drop_geometry() |>
+  dplyr::select(all_of(catchments_id_field), municipality) |>
+  suppressWarnings()
+facility_catchments <- facility_catchments |>
+  merge(y = catchment_to_municipality, by = catchments_id_field, all.x = TRUE) |>
+  dplyr::mutate(in_municipality = as.integer(!is.na(municipality)))
 
 
 ## Create template raster and prepare aggregation table --------------------------------->
 
-catchments_id_field <- config$get('catchments_id_field')
-facility_catchments[[catchments_id_field]] <- seq_len(nrow(facility_catchments))
 id_raster_fp <- config$get_file_path('prepared_data', 'id_raster')
 if(file.exists(id_raster_fp)){
   id_raster <- versioning::autoread(id_raster_fp)
@@ -72,6 +91,10 @@ for(cov_name in cov_names){
     cov_raw <- config$read('raster_db', cov_name)
   } else {
     stop(paste('Covariate', cov_name, 'not found in raw_data or raster_db folders.'))
+  }
+  # Some covariates get missing values filled with zeroes before further preparation
+  if(cov_name %in% c('cropland_carbon_loss', 'cropland_n2o_loss', 'people_near_forest')){
+    terra::values(cov_raw)[is.na(terra::values(cov_raw))] <- 0.0
   }
   # Prepare covariate
   cov_tables[[cov_name]] <- mwi.hiv.factors::aggregate_covariate(
