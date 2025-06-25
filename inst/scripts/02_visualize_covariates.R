@@ -25,8 +25,8 @@ config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
 # Load input data
 cov_data <- config$read("prepared_data", "covariates_by_catchment")
 catchments <- config$read("catchments", "facility_catchments")
-districts <- config$read("catchments", "admin_bounds") |>
-  dplyr::filter(area_level == 3L)
+admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
+districts <- admin_bounds |> dplyr::filter(area_level == 3L)
 
 # Merge catchments with covariates
 catchments_id_field <- config$get("catchments_id_field")
@@ -36,6 +36,7 @@ catchments_with_covs <- merge(
   y = cov_data,
   by = intersect(colnames(catchments), colnames(cov_data))
 )
+
 
 ## Plot each covariate nationwide ------------------------------------------------------->
 
@@ -64,11 +65,8 @@ dev.off()
 
 ## Plot each covariate nationwide, excluding the largest metro areas -------------------->
 
-metro_districts <- c('Lilongwe', 'Blantyre', 'Zomba', 'Mzimba')
-cov_data_sub <- cov_data[!district %in% metro_districts, ]
-catchments_with_covs_sub <- catchments_with_covs[
-  !catchments_with_covs$district %in% metro_districts,
-]
+cov_data_sub <- cov_data[in_municipality == 0L, ]
+catchments_with_covs_sub <- catchments_with_covs[catchments_with_covs$in_municipality == 0L, ]
 
 pdf(config$get_file_path("prepared_data", "covariates_viz_no_metros"), height = 8, width = 8)
 for(cov_name in cov_names){
