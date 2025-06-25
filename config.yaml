@@ -1,5 +1,6 @@
 catchments_id_field: 'catchment_id'
 top_catchments_pct: 0.33
+split_pca_by: ['region', 'setting']
 covariates:
   population_1km: "Population density"
   evi: "Enhanced vegetation index"
@@ -18,29 +19,49 @@ covariates:
   distance_border_posts: "Distance to border posts"
   distance_towns: "Distance to towns (population > 20k)"
   distance_borders: "Distance to national borders"
+  cropland_carbon_loss: 'Carbon loss from cropland'
+  cropland_n2o_loss: 'Nitrogen loss from cropland'
+  evapotranspiration: 'Evapotranspiration'
+  people_near_forest: 'Forest-proximate people'
+  landuse_hard_commodities: 'Land use: hard commodities'
+  landuse_logging: 'Land use: logging'
+  landuse_agriculture: 'Land use: agriculture'
+  landuse_settlements: 'Land use: settlements and infrastructure'
+  latitude: "Latitude"
+  longitude: "Longitude"
 pca_covariates:
-  evi: "EVI"
-  tt_motorized: "Travel time (vehicle)"
+  distance_admarc: "Distance to ADMARC facilities"
   tt_walking: "Travel time (walking)"
+  precipitation: "Precipitation"
+  temperature: "Temperature"
+  cropland_carbon_loss: 'Carbon loss from cropland'
+  cropland_n2o_loss: 'Nitrogen loss from cropland'
+  people_near_forest: 'Forest-proximate people'
   altitude: "Altitude"
   built_surface: "Built structures"
   highways: "Roads"
-  precipitation: "Precipitation"
-  temperature: "Temperature"
-  log_population_1km: "Population density"
-  log_ntl: "Nighttime lights"
-  rwi: "Relative wealth index"
-  distance_admarc: "Distance to ADMARC facilities"
   distance_border_posts: "Distance to border posts"
   distance_towns: "Distance to towns (population > 20k)"
   distance_borders: "Distance to national borders"
+  evapotranspiration: 'Evapotranspiration'
+  landuse_settlements: 'Land use: settlements and infrastructure'
+  landuse_hard_commodities: 'Land use: hard commodities'
+  landuse_logging: 'Land use: logging'
+  landuse_agriculture: 'Land use: agriculture'
+  latitude: "Latitude"
+  longitude: "Longitude"
+  log_population_1km: "Population density"
+  log_ntl: "Nighttime lights"
+  rwi: "Relative wealth index"
+  evi: "EVI"
+  tt_motorized: "Travel time (vehicle)"
 log_transformed: ['log_population_1km', 'log_ntl']
 versions:
   h3_setup: 'TODO'
   catchments: '20240909-192904-3085d3f3'
   splitting: '20250429-214505-9ef0a8a2'
-  prepared_data: '2025-05-27'
-  analysis: '2025-06-09'
+  prepared_data: '2025-06-25'
+  analysis: '2025-06-25'
 directories:
   repo:
     versioned: FALSE
@@ -61,6 +82,7 @@ directories:
     path: '~/repos/respond-map-prep/archive/assign_catchments'
     files:
       facility_catchments: 'artefacts/facility_catchments.gpkg'
+      facility_metadata: 'artefacts/facilities_cleaned.csv'
       admin_bounds: 'artefacts/mwi_areas_ta.geojson'
   splitting:
     versioned: TRUE
@@ -96,6 +118,16 @@ directories:
       population_1km: "mwi_ppp_2020_1km_Aggregated.tif"
       log_ntl: "mwi_viirs_nvf_2023_100m_v1.tif"
       log_population_1km: "mwi_ppp_2020_1km_Aggregated.tif"
+      cropland_carbon_loss: 'croplandc.tif'
+      cropland_n2o_loss: 'croplandn2o.tif'
+      evapotranspiration: 'FLDAS_Evap_tavg.tif'
+      people_near_forest: 'fpp.tif'
+      landuse_hard_commodities: 'hard_commodities.tif'
+      landuse_logging: 'logging.tif'
+      landuse_agriculture: 'permanent_agriculture.tif'
+      landuse_settlements: 'settlements_infra.tif'
+      latitude: 'latitude.tif'
+      longitude: 'longitude.tif'
   raster_db:
     versioned: FALSE
     path: '~/temp_data/rr'
@@ -115,10 +147,11 @@ directories:
     versioned: TRUE
     path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Analysis'
     files:
-      pca_importance: "pca_importance.png"
-      pca_loadings: "pca_loadings.png"
-      pca_loadings_pt2: "pca_loadings_pt2.png"
-      kmeans_wss: "kmeans_wss.png"
-      kmeans_detail_template: "kmeans_detail_{k}_means.png"
-      kmeans_map_template: "kmeans_map_{k}_means.png"
-      pca_kmeans_results: 'pca_kmeans_results.csv'
+      pca_groups: 'pca_groups.csv'
+      pca_importance: "{pca_group}/pca_importance.png"
+      pca_loadings: "{pca_group}/pca_loadings.png"
+      pca_loadings_pt2: "{pca_group}/pca_loadings_pt2.png"
+      kmeans_wss: "{pca_group}/kmeans_wss.png"
+      kmeans_detail_template: "{pca_group}/kmeans_detail_{k}_means.png"
+      kmeans_map_template: "{pca_group}/kmeans_map_{k}_means.png"
+      pca_kmeans_results: '{pca_group}/pca_kmeans_results.csv'
