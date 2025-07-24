@@ -1,5 +1,5 @@
 catchments_id_field: 'catchment_id'
-top_catchments_pct: 0.33
+top_catchments_cutoff: 0.01
 split_pca_by: ['region', 'setting']
 covariates:
   population_1km: "Population density"
@@ -61,7 +61,7 @@ versions:
   catchments: '20240909-192904-3085d3f3'
   splitting: '20250429-214505-9ef0a8a2'
   prepared_data: '2025-06-25'
-  analysis: '2025-06-25'
+  analysis: '2025-07-24'
 directories:
   repo:
     versioned: FALSE
@@ -141,6 +141,7 @@ directories:
       aggregation_table: 'aggregation_table.csv'
       covariates_by_catchment: 'covariates_by_catchment.csv'
       covariates_viz: "covariates_by_catchment.pdf"
+      covariates_viz_top_catchments: "covariates_by_catchment_top_catchments.pdf"
       covariates_viz_no_metros: "covariates_by_catchment_no_metros.pdf"
       covariates_viz_by_district: "covariates_by_catchment_by_district.pdf"
   analysis:

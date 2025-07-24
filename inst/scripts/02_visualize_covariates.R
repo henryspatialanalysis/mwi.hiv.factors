@@ -63,6 +63,36 @@ for(cov_name in cov_names){
 }
 dev.off()
 
+
+## Plot each covariate nationwide, only for top catchments ------------------------------>
+
+top_catchments_cutoff <- config$get("top_catchments_cutoff")
+cov_data_top <- cov_data[viraemia15to49_mean >= top_catchments_cutoff, ]
+catchments_with_covs_top <- catchments_with_covs[
+  catchments_with_covs$viraemia15to49_mean >= top_catchments_cutoff,
+]
+
+pdf(config$get_file_path("prepared_data", "covariates_viz_top_catchments"), height = 8, width = 8)
+for(cov_name in cov_names){
+  message("Preparing plots for ", cov_name)
+  cov_label <- config$get("covariates", cov_name)
+  mwi.hiv.factors::create_three_panel_plot(
+    catchments_with_covs = catchments_with_covs_top,
+    cov_data = cov_data_top,
+    district_bounds = districts,
+    cov_field = cov_name,
+    viraemia_field = 'viraemia15to49_mean',
+    pop_field = 'population_1km',
+    plot_title = paste(cov_label, 'by health facility catchment'),
+    cov_label = cov_label,
+    hist_num_breaks = 30,
+    outcome_colors = outcome_colors,
+    col_lims = quantile(cov_data$THIS_COV, probs = c(0.05, 0.95), na.rm = TRUE)
+  )
+}
+dev.off()
+
+
 ## Plot each covariate nationwide, excluding the largest metro areas -------------------->
 
 cov_data_sub <- cov_data[in_municipality == 0L, ]

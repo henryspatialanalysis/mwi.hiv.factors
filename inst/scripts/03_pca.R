@@ -28,12 +28,8 @@ config$get_dir_path('analysis') |> dir.create()
 cov_data <- config$read("prepared_data", "covariates_by_catchment")
 
 # Keep catchments with highest viraemia
-top_catchments_pct <- config$get("top_catchments_pct")
-top_catchments <- (
-  cov_data
-  [order(-viraemia15to49_mean),]
-  [seq_len(round(top_catchments_pct * .N)), ]
-)
+top_catchments_cutoff <- config$get("top_catchments_cutoff")
+top_catchments <- cov_data[viraemia15to49_mean >= top_catchments_cutoff, ]
 
 # Load catchment and district polygons (will be used for maps later)
 catchments_sf <- config$read('catchments', 'facility_catchments')
@@ -106,7 +102,7 @@ if(length(split_cols) > 0L){
 }
 
 # Save information about the number of catchments by PCA group
-n_catchments_by_group <- top_catchments[, .N, by = group_label]
+n_catchments_by_group <- top_catchments[, .(n_catchments = uniqueN(closest_facility_id)), by = group_label]
 config$write(n_catchments_by_group, 'analysis', 'pca_groups')
 
 
