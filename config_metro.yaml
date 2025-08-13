@@ -1,14 +1,14 @@
 catchments_id_field: 'catchment_id'
 top_catchments_cutoff: 0.01
 pca_level: 'facility'
-split_pca_by: ['southern', 'setting']
-use_pca_for_clustering: true
+split_pca_by: ['setting']
+use_pca_for_clustering: false
 versions:
   h3_setup: 'TODO'
   catchments: '20240909-192904-3085d3f3'
   splitting: '20250429-214505-9ef0a8a2'
   prepared_data: '2025-08-07'
-  analysis: '2025-08-12-non-metro-split-v2'
+  analysis: '2025-08-12-metro'
 covariates:
   population_1km: "Population density"
   evi: "Enhanced vegetation index"
@@ -38,30 +38,12 @@ covariates:
   longitude: "Longitude"
   people_near_forest: 'Forest-proximate people'
 pca_covariates:
-  distance_border_posts: "Distance to border posts"
-  distance_towns: "Distance to towns (population > 20k)"
-  distance_borders: "Distance to national borders"
   landuse_hard_commodities: 'Land use: hard commodities'
-  landuse_logging: 'Land use: logging'
-  distance_admarc: "Distance to ADMARC facilities"
   landuse_agriculture: 'Land use: agriculture'
-  # cropland_carbon_loss: 'Carbon loss from cropland'
   landuse_settlements: 'Land use: settlements and infrastructure' # Maybe not
   log_population_1km: "Population density"
   rwi: "Relative wealth index"
-  # tt_walking: "Travel time to healthcare (walking)"
-  # precipitation: "Precipitation"
-  # temperature: "Temperature"
-  # evi: "EVI"
-  # latitude: "Latitude"
-  # longitude: "Longitude"
-  # cropland_n2o_loss: 'Nitrogen loss from cropland'
-  # people_near_forest: 'Forest-proximate people'
-  # altitude: "Altitude"
-  # built_surface: "Built structures"
-  # highways: "Roads"
-  # evapotranspiration: 'Evapotranspiration'
-  # tt_motorized: "Travel time (vehicle)"
+  # landuse_logging: 'Land use: logging'
   # log_ntl: "Nighttime lights"
 log_transformed: ['log_population_1km', 'log_ntl']
 directories:
