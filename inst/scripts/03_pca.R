@@ -19,20 +19,27 @@ load_pkgs <- c(
 lapply(load_pkgs, library, character.only = TRUE) |> invisible()
 
 # Load config
-config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
+# config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
+config <- versioning::Config$new(file.path(REPO_DIR, 'config_metro.yaml'))
 
 # Create analysis directory
 config$get_dir_path('analysis') |> dir.create()
 
 # Load input data
-cov_data <- config$read("prepared_data", "covariates_by_catchment")
+facility_data <- config$read("prepared_data", "covariates_by_facility")
+gvh_data <- config$read("prepared_data", "covariates_by_gvh")
 
 # Keep catchments with highest viraemia
 top_catchments_cutoff <- config$get("top_catchments_cutoff")
-top_catchments <- cov_data[viraemia15to49_mean >= top_catchments_cutoff, ]
-
+top_facilities <- facility_data[viraemia15to49_mean >= top_catchments_cutoff, ]
+if(config$get("pca_level") == "facility"){
+  top_catchments <- data.table::copy(top_facilities)
+  catchments_sf <- config$read('catchments', 'facility_catchments')
+} else {
+  top_catchments <- gvh_data[closest_facility_id %in% top_facilities$closest_facility_id, ]
+  catchments_sf <- config$read('catchments', 'gvh_catchments')
+}
 # Load catchment and district polygons (will be used for maps later)
-catchments_sf <- config$read('catchments', 'facility_catchments')
 admin_bounds <- config$read("catchments", "admin_bounds")
 districts_sf <- admin_bounds |>
   dplyr::filter(area_level == 3L)
@@ -57,25 +64,32 @@ top_catchments[district_to_region, region := i.region, on = 'district']
 districts_sf <- merge(
   x = districts_sf, y = district_to_region, by.x = 'area_name', by.y = 'district'
 )
+# Add southern/non-southern classification
+districts_sf$southern <- ifelse(
+  districts_sf$region == 'Southern',
+  'Southern',
+  'Non-southern'
+)
 
 # Add facility location to catchment data
 (top_catchments
   [, facility_id := closest_facility_id]
   [facility_metadata, restype := i.restype, on = 'facility_id']
+  [ is.na(in_municipality), in_municipality := 0L ]
   [, setting := ifelse(in_municipality == 1L, 'Municipal', 'Non-municipal') ]
+  [, southern := ifelse(region == 'Southern', 'Southern', 'Non-southern') ]
 )
 
 
 ## Optionally split data into sub-groups ------------------------------------------------>
 
-split_cols <- config$get('split_pca_by')
+split_cols <- config$get('split_pca_by', fail_if_null = FALSE)
 if(length(split_cols) > 0L){
   split_meta <- top_catchments[, split_cols, with = FALSE] |> unique()
   split_meta[, group_label := do.call(paste, .SD), .SDcols = split_cols]
   top_catchments[split_meta, group_label := i.group_label, on = split_cols]
   # Create list of groups to iterate through
-  pca_list <- vector('list', length = nrow(split_meta))
-  names(pca_list) <- split_meta$group_label
+  pca_list <- list()
   for(group_idx in seq_len(nrow(split_meta))){
     split_meta_sub <- split_meta[group_idx, ] |> as.list()
     this_group_label <- split_meta_sub$group_label
@@ -93,6 +107,7 @@ if(length(split_cols) > 0L){
     }
   }
 } else {
+  top_catchments[, group_label := "All" ]
   pca_list <- list(
     All = list(
       districts = districts_sf,
@@ -155,6 +170,19 @@ for(pca_group in pca_groups){
   if(ncol(pca_data) > nrow(pca_data)) stop('Too many features for PCA')
   pca_model <- stats::princomp(pca_data)
 
+  # Save PCA loadings table
+  pca_loadings <- pca_model$loadings |>
+    as.numeric() |>
+    matrix(nrow = ncol(pca_data))
+  colnames(pca_loadings) <- paste0('component_', seq_len(ncol(pca_loadings)))
+  pca_loadings <- cbind(
+    data.frame(feature = colnames(pca_data) |> gsub(pattern = '\\n', replacement = ' ')),
+    pca_loadings
+  )
+  config$get_file_path('analysis', 'pca_loadings_table') |>
+    glue::glue() |>
+    versioning::autowrite(x = pca_loadings)
+
   # PCA visualizations
   # Scree plot
   config$get_file_path('analysis', 'pca_importance') |>
@@ -208,9 +236,16 @@ for(pca_group in pca_groups){
     dev.off()
   }
 
-  # Run k-means clustering on top catchments using the principle components as features
-  viz_components <- min(n_components, 4)
-  kmeans_data <- scale(pca_model$scores[, seq_len(viz_components)])
+  # Run k-means clustering on top catchments
+  if(config$get('use_pca_for_clustering')){
+    # Use the top principal components as features
+    viz_components <- min(n_components, 4)
+    kmeans_data <- scale(pca_model$scores[, seq_len(viz_components)])
+  } else {
+    # Use original features (these have already been rescaled to N(0, 1))
+    viz_components <- ncol(pca_data)
+    kmeans_data <- pca_data
+  }
   max_k <- min(10, nrow(kmeans_data) - 1)
   kmeans_models <- lapply(seq_len(max_k), function(k){
     kmeans(kmeans_data, centers = k)
@@ -247,9 +282,8 @@ for(pca_group in pca_groups){
   dev.off()
 
   # For particular values of k, create scatters and maps of results
-  plot_k <- c(3, 4, 5, 8)
-  plot_k <- plot_k[plot_k <= max_k]
-  plot_components <-
+  plot_k <- seq(2, max_k)
+  cluster_summaries_list <- list()
   for(k in plot_k){
     model_results <- kmeans_models[[k]]
     # Create scatter plots of top four components
@@ -276,10 +310,11 @@ for(pca_group in pca_groups){
     dev.off()
     # Create map of high-viraemia clusters
     catchments_with_clusters <- copy(catchments_sub)[, cluster := plot_data$cluster ]
+    merge_id_field <- if(config$get("pca_level") == "facility") "closest_facility_id" else "gvh_id"
     catchments_sf_sub <- merge(
       x = catchments_sf,
-      y = catchments_with_clusters[, .(closest_facility_id, cluster)],
-      by = 'closest_facility_id'
+      y = catchments_with_clusters[, c(merge_id_field, 'cluster'), with = FALSE],
+      by = merge_id_field
     )
     map_fig <- ggplot2::ggplot() +
       ggplot2::geom_sf(
@@ -304,9 +339,46 @@ for(pca_group in pca_groups){
       png(height = 8, width = 6, units = 'in', res = 300)
     print(map_fig)
     dev.off()
+
+    ## Summarize features in each cluster and compare to group overall
+    cic <- data.table::copy(catchments_with_clusters[, c(cov_names, 'cluster'), with = FALSE])
+    cluster_summaries_list[[paste0(k, '_cluster')]] <- list(
+      cic[, lapply(.SD, mean, na.rm = T), by = cluster ][, summ := 'mean'],
+      cic[, lapply(.SD, median, na.rm = T), by = cluster ][, summ := 'median'],
+      cic[, lapply(.SD, sd, na.rm = T), by = cluster ][, summ := 'sd'],
+      cic[, lapply(.SD, quantile, probs = 0.1, na.rm = T), by = cluster ][, summ := 'q10'],
+      cic[, lapply(.SD, quantile, probs = 0.9, na.rm = T), by = cluster ][, summ := 'q90']
+    ) |>
+      data.table::rbindlist() |>
+      data.table::melt(id.vars = c('cluster', 'summ')) |>
+      data.table::dcast('variable + cluster ~ summ', value.var = 'value') |>
+      _[, n_clusters := k ]
   }
+  full_cluster_data <- data.table::rbindlist(cluster_summaries_list)
+  for_summ <- catchments_sub[, cov_names, with = FALSE]
+  group_baseline <- list(
+      for_summ[, lapply(.SD, mean, na.rm = T)][, summ := 'mean'],
+      for_summ[, lapply(.SD, median, na.rm = T)][, summ := 'median'],
+      for_summ[, lapply(.SD, sd, na.rm = T)][, summ := 'sd'],
+      for_summ[, lapply(.SD, quantile, probs = 0.1, na.rm = T)][, summ := 'q10'],
+      for_summ[, lapply(.SD, quantile, probs = 0.9, na.rm = T)][, summ := 'q90']
+  ) |>
+    data.table::rbindlist() |>
+    data.table::melt(id.vars = c('summ')) |>
+    data.table::dcast(variable ~ summ, value.var = 'value')
+  comparison_table_by_cluster <- merge(
+    x = full_cluster_data,
+    y = group_baseline,
+    by = 'variable',
+    suffixes = c('_cluster', '_baseline'),
+    all = TRUE
+  )
 
   ## Save results ------------------------------------------------------------------------->
+
+  config$get_file_path('analysis', 'pca_kmeans_summaries') |>
+    glue::glue() |>
+    versioning::autowrite(x = comparison_table_by_cluster)
 
   pca_loadings <- pca_model$scores |> as.data.table()
   colnames(pca_loadings) <- paste0('pc', seq_len(ncol(pca_loadings)))
