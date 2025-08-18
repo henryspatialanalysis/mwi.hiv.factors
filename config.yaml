@@ -8,7 +8,7 @@ versions:
   catchments: '20240909-192904-3085d3f3'
   splitting: '20250429-214505-9ef0a8a2'
   prepared_data: '2025-08-07'
-  analysis: '2025-08-12-non-metro-split-v2'
+  analysis: '2025-08-12-combined'
 covariates:
   population_1km: "Population density"
   evi: "Enhanced vegetation index"
@@ -22,13 +22,13 @@ covariates:
   rwi: "Relative wealth index"
   distance_admarc: "Distance to ADMARC facilities"
   distance_border_posts: "Distance to border posts"
-  distance_towns: "Distance to towns (population > 20k)"
+  distance_towns: "Distance to towns (population>20k)"
   distance_borders: "Distance to national borders"
   cropland_carbon_loss: 'Carbon loss from cropland'
-  landuse_hard_commodities: 'Land use: hard commodities'
-  landuse_logging: 'Land use: logging'
-  landuse_agriculture: 'Land use: agriculture'
-  landuse_settlements: 'Land use: settlements and infrastructure'
+  landuse_hard_commodities: 'Landuse: hard commodities'
+  landuse_logging: 'Landuse: logging'
+  landuse_agriculture: 'Landuse: agriculture'
+  landuse_settlements: 'Landuse: settlements and infrastructure'
   log_ntl: "Nighttime light intensity (log-transformed)"
   tt_motorized: "Travel time to healthcare (motorized)"
   altitude: "Altitude"
@@ -39,14 +39,14 @@ covariates:
   people_near_forest: 'Forest-proximate people'
 pca_covariates:
   distance_border_posts: "Distance to border posts"
-  distance_towns: "Distance to towns (population > 20k)"
+  distance_towns: "Distance to towns (population>20k)"
   distance_borders: "Distance to national borders"
-  landuse_hard_commodities: 'Land use: hard commodities'
-  landuse_logging: 'Land use: logging'
+  landuse_hard_commodities: 'Landuse: hard commodities'
+  landuse_logging: 'Landuse: logging'
   distance_admarc: "Distance to ADMARC facilities"
-  landuse_agriculture: 'Land use: agriculture'
+  landuse_agriculture: 'Landuse: agriculture'
   # cropland_carbon_loss: 'Carbon loss from cropland'
-  landuse_settlements: 'Land use: settlements and infrastructure' # Maybe not
+  landuse_settlements: 'Landuse: settlements and infrastructure' # Maybe not
   log_population_1km: "Population density"
   rwi: "Relative wealth index"
   # tt_walking: "Travel time to healthcare (walking)"
@@ -164,3 +164,5 @@ directories:
       kmeans_map_template: "{pca_group}/kmeans_map_{k}_means.png"
       pca_kmeans_results: '{pca_group}/pca_kmeans_results.csv'
       pca_kmeans_summaries: '{pca_group}/pca_kmeans_covariate_summaries.csv'
+      pca_results_combined: 'pca_results_combined.csv'
+      pca_histograms: 'pca_histograms.pdf'
