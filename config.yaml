@@ -166,3 +166,5 @@ directories:
       pca_kmeans_summaries: '{pca_group}/pca_kmeans_covariate_summaries.csv'
       pca_results_combined: 'pca_results_combined.csv'
       pca_histograms: 'pca_histograms.pdf'
+      pca_national_map: 'pca_national_map.pdf'
+      cluster_colors: 'cluster_colors.csv'
