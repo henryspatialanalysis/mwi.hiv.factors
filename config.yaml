@@ -168,3 +168,4 @@ directories:
       pca_histograms: 'pca_histograms.pdf'
       pca_national_map: 'pca_national_map.pdf'
       cluster_colors: 'cluster_colors.csv'
+      gvh_covariate_viz: 'gvh_covariate_viz.pdf'
