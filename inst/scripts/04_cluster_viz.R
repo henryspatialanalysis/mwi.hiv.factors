@@ -16,6 +16,7 @@ PCA_ONLY <- FALSE
 
 load_pkgs <- c('data.table', 'ggplot2', 'glue', 'versioning')
 lapply(load_pkgs, library, character.only = TRUE) |> invisible()
+devtools::load_all(REPO_DIR)
 # Load config
 config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
 
@@ -33,6 +34,8 @@ districts_sf <- admin_bounds |> dplyr::filter(area_level == 3L)
 regions_sf <- admin_bounds |> dplyr::filter(area_level == 1L)
 
 # Load facility data, combined across all regional analyses
+facility_meta <- config$read('catchments', 'facility_metadata') |>
+  _[, lapply(.SD, first), by = facility_id]
 facility_data <- config$read("analysis", "pca_results_combined")
 
 # Load GVH data
@@ -109,7 +112,7 @@ ggplot2::ggsave(
   height = uniqueN(facility_data_all$cluster_name) * 1.5 + 1
 )
 
-## Create a map of all clusters nationwide ---------------------------------------------->
+## Create maps of all clusters nationwide ----------------------------------------------->
 
 catchments_meta <- merge(
   x = catchments_sf,
@@ -140,6 +143,33 @@ ggplot2::ggsave(
   width = 6,
   height = 10
 )
+
+## Create district-level maps ----------------------------------------------------------->
+
+prefixes <- mwi.hiv.factors::letters_ref()
+district_plot_dir <- config$get_file_path('analysis', 'pca_district_maps') |>
+  dirname()
+dir.create(district_plot_dir, showWarnings = FALSE, recursive = TRUE)
+
+for(this_district in unique(catchments_meta$district)){
+  msg <- glue::glue("Creating district-level maps for {this_district}")
+  message(msg)
+  tictoc::tic(msg)
+  # Get the subset of facilities to be plotted in this district
+  facilities_to_plot <- facility_meta |>
+    _[(district == this_district) & (facility_id %in% catchments_meta$closest_facility_id), ] |>
+    _[order(-latitude)] |>
+    _[ , facility_label := paste0(prefixes[.I], '. ', short_label(facility_name)) ]
+  district_plot(
+    district_name = this_district,
+    districts_sf = districts_sf,
+    catchments_sf = catchments_meta,
+    catchment_colors = plot_colors,
+    facility_data = facilities_to_plot,
+    out_fp = config$get_file_path('analysis', 'pca_district_maps') |> glue::glue()
+  )
+  tictoc::toc()
+}
 
 
 ## Create trendlines of GVH characteristics *by cluster* -------------------------------->

@@ -167,5 +167,6 @@ directories:
       pca_results_combined: 'pca_results_combined.csv'
       pca_histograms: 'pca_histograms.pdf'
       pca_national_map: 'pca_national_map.pdf'
+      pca_district_maps: 'pca_district_maps/pca_district_map_{this_district}.png'
       cluster_colors: 'cluster_colors.csv'
       gvh_covariate_viz: 'gvh_covariate_viz.pdf'
