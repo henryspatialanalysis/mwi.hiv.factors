@@ -9,8 +9,10 @@ versions:
   splitting: '20250429-214505-9ef0a8a2'
   prepared_data: '2025-08-07'
   analysis: '2025-08-12-combined'
+  census: '20240905-072347-cce9be26'
 covariates:
   population_1km: "Population density"
+  poverty: "Poverty rate"
   evi: "Enhanced vegetation index"
   tt_walking: "Travel time to healthcare (walking)"
   built_surface: "Density of built structures"
@@ -49,6 +51,7 @@ pca_covariates:
   landuse_settlements: 'Landuse: settlements and infrastructure' # Maybe not
   log_population_1km: "Population density"
   rwi: "Relative wealth index"
+  poverty: "Poverty rate"
   # tt_walking: "Travel time to healthcare (walking)"
   # precipitation: "Precipitation"
   # temperature: "Temperature"
@@ -93,6 +96,11 @@ directories:
     path: '~/repos/respond-map-prep/archive/split_model_results'
     files:
       aggregated_results: 'artefacts/aggregate_summary_table.csv'
+  census:
+    versioned: TRUE
+    path: '~/repos/respond-map-prep/archive/raw_2024-09-05_malawi-nso_census-2018-village_backup'
+    files:
+      villages: 'raw/2018 Census Population by Village.xls'
   raw_vectors:
     versioned: FALSE
     path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Datasets/original_vector_data'
@@ -101,6 +109,7 @@ directories:
       border_posts: 'LSMS_2019/BorderPosts.shp'
       towns: 'LSMS_2019/Malawi_towns.shp'
       town_populations: 'LSMS_2019/CityPopulation_c2018.xls'
+      poverty: 'poverty_EA_predictions.csv'
   raw_data:
     versioned: FALSE
     path: '/mnt/c/Users/Lenovo/Dropbox/RESPOND_Community Archetyping/Datasets/original_raster_data'
@@ -132,6 +141,7 @@ directories:
       landuse_settlements: 'settlements_infra.tif'
       latitude: 'latitude.tif'
       longitude: 'longitude.tif'
+      poverty: 'poverty.tif'
   raster_db:
     versioned: FALSE
     path: '~/temp_data/rr'
