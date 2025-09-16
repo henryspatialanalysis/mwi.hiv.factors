@@ -23,7 +23,7 @@ devtools::load_all(REPO_DIR)
 config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
 
 # Load input data
-cov_data <- config$read("prepared_data", "covariates_by_catchment")
+cov_data <- config$read("prepared_data", "covariates_by_facility")
 catchments <- config$read("catchments", "facility_catchments")
 admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
 districts <- admin_bounds |> dplyr::filter(area_level == 3L)
