@@ -180,3 +180,5 @@ directories:
       pca_district_maps: 'pca_district_maps/pca_district_map_{this_district}.png'
       cluster_colors: 'cluster_colors.csv'
       gvh_covariate_viz: 'gvh_covariate_viz.pdf'
+      gvh_regressions_by_archetype: 'gvh_regressions_by_archetype.csv'
+
