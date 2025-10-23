@@ -4,11 +4,12 @@ pca_level: 'facility'
 split_pca_by: ['setting']
 use_pca_for_clustering: false
 versions:
-  h3_setup: 'TODO'
-  catchments: '20240909-192904-3085d3f3'
-  splitting: '20250429-214505-9ef0a8a2'
-  prepared_data: '2025-08-07'
-  analysis: '2025-08-12-metro'
+  census: '20240905-072347-cce9be26'
+  h3_setup: '20250509-230920-52b814f3'
+  catchments: '20251023-175033-0ad2885f'
+  splitting: '20251023-183615-8d9511ff'
+  prepared_data: '2025-10-23'
+  analysis: '2025-10-23-metro'
 covariates:
   population_1km: "Population density"
   evi: "Enhanced vegetation index"
@@ -61,6 +62,13 @@ directories:
       h3_aggregation_table: 'artefacts/h3_aggregation_table.csv'
       h3_centers: 'artefacts/h3_centers.csv'
       h3_polys: 'artefacts/h3_boundaries.gpkg'
+  global_shp:
+    versioned: FALSE
+    path: '/mnt/c//Users/Lenovo/OneDrive - Henry Spatial Analysis LLC/Clients/DHS/Sharing/Updated GAUL shapefile'
+    files:
+      adm0: 'g2015_2014_0.shp'
+      adm1: 'g2015_2014_1.shp'
+      adm2: 'g2015_2014_2.shp'
   catchments:
     versioned: TRUE
     path: '~/repos/respond-map-prep/archive/assign_catchments'

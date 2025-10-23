@@ -1,15 +1,16 @@
 catchments_id_field: 'catchment_id'
 top_catchments_cutoff: 0.01
 pca_level: 'facility'
-split_pca_by: ['southern', 'setting']
+split_pca_by: []
+# split_pca_by: ['southern', 'setting']
 use_pca_for_clustering: true
 versions:
+  census: '20240905-072347-cce9be26'
   h3_setup: '20250509-230920-52b814f3'
   catchments: '20251023-175033-0ad2885f'
   splitting: '20251023-183615-8d9511ff'
-  prepared_data: '2025-08-07'
-  analysis: '2025-08-12-combined'
-  census: '20240905-072347-cce9be26'
+  prepared_data: '2025-10-23'
+  analysis: '2025-10-23-no-splits'
 covariates:
   population_1km: "Population density"
   poverty: "Poverty rate"
@@ -73,6 +74,13 @@ directories:
     path: '~/repos/mwi.hiv.factors'
     files:
       config: 'config.yaml'
+  global_shp:
+    versioned: FALSE
+    path: '/mnt/c//Users/Lenovo/OneDrive - Henry Spatial Analysis LLC/Clients/DHS/Sharing/Updated GAUL shapefile'
+    files:
+      adm0: 'g2015_2014_0.shp'
+      adm1: 'g2015_2014_1.shp'
+      adm2: 'g2015_2014_2.shp'
   h3_setup:
     versioned: TRUE
     path: '~/repos/respond-map-prep/archive/h3_setup'

@@ -27,8 +27,8 @@ destinations <- list(
   admarc = config$read('raw_vectors', 'admarc'),
   border_posts = config$read('raw_vectors', 'border_posts'),
   towns = config$read('raw_vectors', 'towns'),
-  borders = config$read("catchments", "admin_bounds") |>
-    dplyr::filter(area_level == 0L)
+  borders = config$read("global_shp", "adm0") |>
+    dplyr::filter(ADM0_NAME == 'Malawi')
 )
 town_populations <- config$read(
   'raw_vectors', 'town_populations', sheet = 'CityPopulation_de'
