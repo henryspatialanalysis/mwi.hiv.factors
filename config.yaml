@@ -4,9 +4,9 @@ pca_level: 'facility'
 split_pca_by: ['southern', 'setting']
 use_pca_for_clustering: true
 versions:
-  h3_setup: 'TODO'
-  catchments: '20240909-192904-3085d3f3'
-  splitting: '20250429-214505-9ef0a8a2'
+  h3_setup: '20250509-230920-52b814f3'
+  catchments: '20251023-175033-0ad2885f'
+  splitting: '20251023-183615-8d9511ff'
   prepared_data: '2025-08-07'
   analysis: '2025-08-12-combined'
   census: '20240905-072347-cce9be26'
