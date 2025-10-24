@@ -19,8 +19,8 @@ load_pkgs <- c(
 lapply(load_pkgs, library, character.only = TRUE) |> invisible()
 
 # Load config
-# config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
-config <- versioning::Config$new(file.path(REPO_DIR, 'config_metro.yaml'))
+config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
+# config <- versioning::Config$new(file.path(REPO_DIR, 'config_metro.yaml'))
 
 # Create analysis directory
 config$get_dir_path('analysis') |> dir.create()
@@ -36,7 +36,7 @@ if(config$get("pca_level") == "facility"){
   top_catchments <- data.table::copy(top_facilities)
   catchments_sf <- config$read('catchments', 'facility_catchments')
 } else {
-  top_catchments <- gvh_data[closest_facility_id %in% top_facilities$closest_facility_id, ]
+  top_catchments <- gvh_data[catchment_id %in% top_facilities$catchment_id, ]
   catchments_sf <- config$read('catchments', 'gvh_catchments')
 }
 # Load catchment and district polygons (will be used for maps later)
@@ -73,8 +73,6 @@ districts_sf$southern <- ifelse(
 
 # Add facility location to catchment data
 (top_catchments
-  [, facility_id := closest_facility_id]
-  [facility_metadata, restype := i.restype, on = 'facility_id']
   [ is.na(in_municipality), in_municipality := 0L ]
   [, setting := ifelse(in_municipality == 1L, 'Municipal', 'Non-municipal') ]
   [, southern := ifelse(region == 'Southern', 'Southern', 'Non-southern') ]
@@ -117,7 +115,7 @@ if(length(split_cols) > 0L){
 }
 
 # Save information about the number of catchments by PCA group
-n_catchments_by_group <- top_catchments[, .(n_catchments = uniqueN(closest_facility_id)), by = group_label]
+n_catchments_by_group <- top_catchments[, .(n_catchments = uniqueN(catchment_id)), by = group_label]
 config$write(n_catchments_by_group, 'analysis', 'pca_groups')
 
 
@@ -246,7 +244,7 @@ for(pca_group in pca_groups){
     viz_components <- ncol(pca_data)
     kmeans_data <- pca_data
   }
-  max_k <- min(10, nrow(kmeans_data) - 1)
+  max_k <- min(15, nrow(kmeans_data) - 1)
   kmeans_models <- lapply(seq_len(max_k), function(k){
     kmeans(kmeans_data, centers = k)
   })
@@ -310,7 +308,7 @@ for(pca_group in pca_groups){
     dev.off()
     # Create map of high-viraemia clusters
     catchments_with_clusters <- copy(catchments_sub)[, cluster := plot_data$cluster ]
-    merge_id_field <- if(config$get("pca_level") == "facility") "closest_facility_id" else "gvh_id"
+    merge_id_field <- if(config$get("pca_level") == "facility") "catchment_id" else "gvh_id"
     catchments_sf_sub <- merge(
       x = catchments_sf,
       y = catchments_with_clusters[, c(merge_id_field, 'cluster'), with = FALSE],
