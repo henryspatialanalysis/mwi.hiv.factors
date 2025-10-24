@@ -10,7 +10,7 @@ versions:
   catchments: '20251023-175033-0ad2885f'
   splitting: '20251023-183615-8d9511ff'
   prepared_data: '2025-10-23'
-  analysis: '2025-10-23-no-splits'
+  analysis: '2025-10-23-splits'
 covariates:
   population_1km: "Population density"
   poverty: "Poverty rate"
@@ -52,7 +52,7 @@ pca_covariates:
   landuse_settlements: 'Landuse: settlements and infrastructure' # Maybe not
   log_population_1km: "Population density"
   rwi: "Relative wealth index"
-  poverty: "Poverty rate"
+  # poverty: "Poverty rate"
   # tt_walking: "Travel time to healthcare (walking)"
   # precipitation: "Precipitation"
   # temperature: "Temperature"
