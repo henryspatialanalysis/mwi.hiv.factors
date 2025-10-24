@@ -26,7 +26,7 @@ dir.create(config$get_dir_path('prepared_data'))
 # Load inputs
 pop <- config$read('raw_data', 'population_1km')
 gvh_meta <- config$read('catchments', 'gvh_meta') |>
-  _[, .(gvh_id, closest_facility_id)] |>
+  _[, .(gvh_id, catchment_id)] |>
   na.omit() |>
   unique()
 gvh_catchments <- config$read('catchments', 'gvh_catchments', quiet = TRUE) |>
@@ -39,7 +39,6 @@ admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
 ## Assign metro vs. non-metro for each facility catchment and GVH ----------------------->
 
 catchments_id_field <- config$get('catchments_id_field')
-facility_catchments[[catchments_id_field]] <- seq_len(nrow(facility_catchments))
 municipalities <- admin_bounds |>
   dplyr::filter(area_level == 5L) |>
   dplyr::filter(endsWith(area_name, ' City')) |>
@@ -54,17 +53,6 @@ catchment_to_municipality <- facility_catchments |>
 facility_catchments <- facility_catchments |>
   merge(y = catchment_to_municipality, by = catchments_id_field, all.x = TRUE) |>
   dplyr::mutate(in_municipality = as.integer(!is.na(municipality)))
-# Merge facility metadata onto GVH
-facility_to_gvh <- facility_catchments |>
-  sf::st_drop_geometry() |>
-  data.table::as.data.table() |>
-  _[, .(catchment_id, closest_facility_name, municipality, in_municipality)]
-gvh_catchments <- gvh_catchments |>
-  merge(
-    y = facility_to_gvh, by.x = 'closest_facility_id', by.y = 'catchment_id',
-    all.x = TRUE
-  ) |>
-  dplyr::mutate(in_gvh = !is.na(closest_facility_id))
 
 
 ## Create template raster and prepare aggregation table --------------------------------->
@@ -160,13 +148,13 @@ for(agg_type in agg_types){
   }
 
   # Merge on viraemia, prevalence, VLS, and population by catchment
-  agg_level <- if(agg_type == 'facility') 'CLOSEST_FACILITIES' else 'GVH'
+  agg_level <- if(agg_type == 'facility') 'FACILITY_CATCHMENTS' else 'GVH'
   hiv_by_catchment <- (
     aggregate_results
     [ aggregation_level == agg_level, ]
     [, id := as.integer(id)]
   )
-  merge_id_field <- if(agg_type == 'facility') 'closest_facility_id' else 'gvh_id'
+  merge_id_field <- if(agg_type == 'facility') 'catchment_id' else 'gvh_id'
   if(any(hiv_by_catchment$id != full_data[[merge_id_field]])){
     stop("Mismatch between closest facility IDs in aggregate results and covariates by catchment")
   }
