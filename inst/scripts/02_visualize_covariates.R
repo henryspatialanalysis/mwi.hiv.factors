@@ -116,8 +116,8 @@ for(cov_name in cov_names){
     col_lims = quantile(cov_data$THIS_COV, probs = c(0.05, 0.95), na.rm = TRUE)
   )
 }
-
 dev.off()
+
 
 ## Plot each covariate by district ------------------------------------------------------>
 
