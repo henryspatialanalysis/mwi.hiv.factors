@@ -1,14 +1,13 @@
 catchments_id_field: 'catchment_id'
 top_catchments_cutoff: 0.01
 pca_level: 'facility'
-split_pca_by: []
-# split_pca_by: ['southern', 'setting']
+split_pca_by: ['southern', 'setting']
 use_pca_for_clustering: true
 versions:
   census: '20240905-072347-cce9be26'
   h3_setup: '20250509-230920-52b814f3'
-  catchments: '20251023-175033-0ad2885f'
-  splitting: '20251023-183615-8d9511ff'
+  catchments: '20251024-223002-0139c90e'
+  splitting: '20251024-224705-a9b5e9d7'
   prepared_data: '2025-10-23'
   analysis: '2025-10-23-splits'
 covariates:
