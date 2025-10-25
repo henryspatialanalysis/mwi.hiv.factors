@@ -46,7 +46,11 @@ rwi_raster <- id_raster
 terra::values(rwi_raster)[!is.na(terra::values(rwi_raster))] <- id_points_joined$rwi
 names(rwi_raster) <- 'rwi'
 
+# Create a "relative poverty index" raster, -1 * RWI
+rpi_raster <- rwi_raster * -1
+names(rpi_raster) <- 'rpi'
 
 ## Save RWI raster to file -------------------------------------------------------------->
 
 config$write(rwi_raster, 'raw_data', 'rwi')
+config$write(rpi_raster, 'raw_data', 'rpi')

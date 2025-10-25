@@ -22,6 +22,7 @@ covariates:
   ntl: "Nighttime light intensity"
   log_population_1km: "Population density (log-transformed)"
   rwi: "Relative wealth index"
+  rpi: "Relative poverty index"
   distance_admarc: "Distance to ADMARC facilities"
   distance_border_posts: "Distance to border posts"
   distance_towns: "Distance to towns (population>20k)"
@@ -29,6 +30,7 @@ covariates:
   cropland_carbon_loss: 'Carbon loss from cropland'
   landuse_hard_commodities: 'Landuse: hard commodities'
   landuse_logging: 'Landuse: logging'
+  landuse_logging_or_hard_commodities: "Landuse: logging, drilling, or mining"
   landuse_agriculture: 'Landuse: agriculture'
   landuse_settlements: 'Landuse: settlements and infrastructure'
   log_ntl: "Nighttime light intensity (log-transformed)"
@@ -50,7 +52,8 @@ pca_covariates:
   # cropland_carbon_loss: 'Carbon loss from cropland'
   landuse_settlements: 'Landuse: settlements and infrastructure' # Maybe not
   log_population_1km: "Population density"
-  rwi: "Relative wealth index"
+  # rwi: "Relative wealth index"
+  rpi: "Relative poverty index"
   # poverty: "Poverty rate"
   # tt_walking: "Travel time to healthcare (walking)"
   # precipitation: "Precipitation"
@@ -67,6 +70,7 @@ pca_covariates:
   # tt_motorized: "Travel time (vehicle)"
   # log_ntl: "Nighttime lights"
 log_transformed: ['log_population_1km', 'log_ntl']
+log_viz: ['population_1km', 'ntl']
 directories:
   repo:
     versioned: FALSE
@@ -123,6 +127,7 @@ directories:
     files:
       rwi_raw: "mwi_relative_wealth_index.csv"
       rwi: "mwi_rwi.tif"
+      rpi: 'mwi_rpi.tif'
       distance_admarc: "distance_admarc.tif"
       distance_border_posts: "distance_border_posts.tif"
       distance_towns: "distance_towns_over_20k.tif"
@@ -144,6 +149,7 @@ directories:
       people_near_forest: 'fpp.tif'
       landuse_hard_commodities: 'hard_commodities.tif'
       landuse_logging: 'logging.tif'
+      landuse_logging_or_hard_commodities: 'landuse_logging_or_hard_commodities.tif'
       landuse_agriculture: 'permanent_agriculture.tif'
       landuse_settlements: 'settlements_infra.tif'
       latitude: 'latitude.tif'
