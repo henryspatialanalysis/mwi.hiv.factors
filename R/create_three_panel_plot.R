@@ -1,4 +1,54 @@
 
+
+#' Create a map of covariate values by health facility catchment
+#'
+#' @param catchments_with_covs ([sf::sf] object) Polygons merged with covariate data, must contain column `THIS_COV` for plotting
+#' @param district_bounds ([sf::sf] object) District boundaries to plot over catchment polygons
+#' @param outcome_colors (`character(N)`) Vector of colors for filling the covariate map
+#' @param col_lims (`numeric(2)`) Numeric vector of length two specifying color scale limits (min, max)
+#' @param log_scale (`logical(1)`) Whether to use a log transformation for the color scale (`TRUE` or `FALSE`)
+#' @param cov_label (`character(1)`) Label for the covariate to use in the legend
+#'
+#' @return A [ggplot2::ggplot] object showing the covariate map for catchments
+#' @import ggplot2
+#' @importFrom scales squish comma
+#' @export
+create_covariate_map <- function(
+  catchments_with_covs,
+  district_bounds,
+  outcome_colors,
+  col_lims,
+  log_scale,
+  cov_label
+){
+  map_fig <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      data = catchments_with_covs,
+      mapping = ggplot2::aes(fill = THIS_COV),
+      color = NA,
+      linewidth = 0L
+    ) +
+    ggplot2::geom_sf(data = district_bounds, fill = NA, color = 'black', linewidth = 0.5) +
+    ggplot2::scale_fill_gradientn(
+      colors = outcome_colors,
+      limits = col_lims,
+      labels = scales::comma,
+      oob = scales::squish,
+      trans = if(log_scale) 'log1p' else 'identity'
+    ) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      panel.grid = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      axis.title = ggplot2::element_blank()
+    ) +
+    ggplot2::labs(
+      fill = cov_label |> gsub(pattern = ' ', replacement = '\n')
+    )
+  return(map_fig)
+}
+
 #' Create three-panel plots for a covariate
 #'
 #' @param catchments_with_covs ([sf::sf] object) Polygons merged with covariate data
@@ -14,6 +64,8 @@
 #' @param outcome_colors (`character(N)`, default `viridis::viridis(n = 100)`) Colors for
 #'   the outcome variable
 #' @param col_lims (`numeric(2)`, default `c(0, 1)`) Color limits for the outcome variable
+#' @param log_scale (`logical(1)`, default `FALSE`) Whether to plot the outcome variable
+#'   on a log scale
 #'
 #' @return Plots the three panel plot to the active graphics device, returns NULL
 #'
@@ -24,7 +76,7 @@
 create_three_panel_plot <- function(
   catchments_with_covs, cov_data, district_bounds, cov_field, viraemia_field, pop_field,
   plot_title, cov_label, hist_num_breaks = 30,
-  outcome_colors = viridis::viridis(n = 100), col_lims = c(0, 1)
+  outcome_colors = viridis::viridis(n = 100), col_lims = c(0, 1), log_scale = FALSE
 ){
   # Prepare input data
   catchments_with_covs$THIS_COV <- catchments_with_covs[[cov_field]]
@@ -33,26 +85,14 @@ create_three_panel_plot <- function(
   cov_data$VIRAEMIA <- cov_data[[viraemia_field]]
   cov_data$POPULATION <- cov_data[[pop_field]]
 
-  # Plot 1: Malawi map
-  p1 <- ggplot2::ggplot() +
-    ggplot2::geom_sf(
-      data = catchments_with_covs,
-      mapping = ggplot2::aes(fill = THIS_COV),
-      color = NA,
-      linewidth = 0L
-    ) +
-    ggplot2::geom_sf(data = district_bounds, fill = NA, color = 'black', linewidth = 0.5) +
-    ggplot2::scale_fill_gradientn(
-      colors = outcome_colors, limits = col_lims, oob = scales::squish
-    ) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      panel.grid = ggplot2::element_blank(),
-      axis.text = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank(),
-      axis.title = ggplot2::element_blank()
-    ) +
-    ggplot2::labs(fill = cov_label |> gsub(pattern = ' ', replacement = '\n'))
+  p1 <- create_covariate_map(
+    catchments_with_covs = catchments_with_covs,
+    district_bounds = district_bounds,
+    outcome_colors = outcome_colors,
+    col_lims = col_lims,
+    log_scale = log_scale,
+    cov_label = cov_label
+  )
 
   # Plot 2: Histogram
   hist_model <- graphics::hist(cov_data$THIS_COV, breaks = hist_num_breaks, plot = FALSE)

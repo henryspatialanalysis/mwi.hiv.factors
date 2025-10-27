@@ -15,7 +15,8 @@ create_three_panel_plot(
   cov_label,
   hist_num_breaks = 30,
   outcome_colors = viridis::viridis(n = 100),
-  col_lims = c(0, 1)
+  col_lims = c(0, 1),
+  log_scale = FALSE
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ covariate data, viraemia, and population}
 the outcome variable}
 
 \item{col_lims}{(\code{numeric(2)}, default \code{c(0, 1)}) Color limits for the outcome variable}
+
+\item{log_scale}{(\code{logical(1)}, default \code{FALSE}) Whether to plot the outcome variable
+on a log scale}
 }
 \value{
 Plots the three panel plot to the active graphics device, returns NULL
