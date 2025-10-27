@@ -27,6 +27,7 @@ cov_data <- config$read("prepared_data", "covariates_by_facility")
 catchments <- config$read("catchments", "facility_catchments")
 admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
 districts <- admin_bounds |> dplyr::filter(area_level == 3L)
+regions <- admin_bounds |> dplyr::filter(area_level == 1L)
 
 # Merge catchments with covariates
 catchments_id_field <- config$get("catchments_id_field")
@@ -36,6 +37,19 @@ catchments_with_covs <- merge(
   y = cov_data,
   by = intersect(colnames(catchments), colnames(cov_data))
 )
+
+## Add region (N+C, S) to spatial files ------------------------------------------------->
+
+regions$region <- regions$area_name
+districts$region <- districts |>
+  sf::st_point_on_surface() |>
+  sf::st_join(y = regions) |>
+  _$region |>
+  suppressWarnings()
+d_to_r <- districts |>
+  sf::st_drop_geometry() |>
+  dplyr::select(district = area_name, region)
+catchments_with_covs <- merge(catchments_with_covs, d_to_r, by = 'district')
 
 
 ## Plot each covariate nationwide ------------------------------------------------------->
@@ -87,10 +101,59 @@ for(cov_name in cov_names){
     cov_label = cov_label,
     hist_num_breaks = 30,
     outcome_colors = outcome_colors,
-    col_lims = quantile(cov_data$THIS_COV, probs = c(0.05, 0.95), na.rm = TRUE)
+    col_lims = quantile(cov_data[[cov_name]], probs = c(0.05, 0.95), na.rm = TRUE)
   )
 }
 dev.off()
+
+# Add maps for each image in C+N and S
+regional_plots_dir <- config$get_dir_path('prepared_data') |> file.path('regional_maps')
+dir.create(regional_plots_dir, showWarnings = FALSE, recursive = TRUE)
+for(cov_name in cov_names){
+  message("Plotting regional maps for ", cov_name)
+  cov_label <- config$get("covariates", cov_name)
+  catchments_with_covs_top$THIS_COV <- catchments_with_covs_top[[cov_name]]
+
+  # Plot map
+  png(
+    glue::glue("{regional_plots_dir}/{cov_name}_map_nationwide.png"),
+    height = 8, width = 5, units = 'in', res = 300
+  )
+  cov_map <- mwi.hiv.factors::create_covariate_map(
+    catchments_with_covs = catchments_with_covs_top,
+    district_bounds = districts,
+    outcome_colors = outcome_colors,
+    col_lims = quantile(cov_data[[cov_name]], probs = c(0.05, 0.95), na.rm = TRUE),
+    log_scale = cov_name %in% config$get('log_viz'),
+    cov_label = config$get("covariates", cov_name)
+  )
+  print(cov_map)
+  dev.off()
+  # Regional maps
+  for(reg in c('Southern', 'North-Central')){
+    if(reg == 'Southern'){
+      d_sub <- districts[districts$region == 'Southern', ]
+      c_sub <- catchments_with_covs_top[catchments_with_covs_top$region == 'Southern', ]
+    } else {
+      d_sub <- districts[districts$region != 'Southern', ]
+      c_sub <- catchments_with_covs_top[catchments_with_covs_top$region != 'Southern', ]
+    }
+    png(
+      glue::glue("{regional_plots_dir}/{cov_name}_map_{reg}.png"),
+      height = 8, width = 5, units = 'in', res = 300
+    )
+    cov_map <- mwi.hiv.factors::create_covariate_map(
+      catchments_with_covs = c_sub,
+      district_bounds = d_sub,
+      outcome_colors = outcome_colors,
+      col_lims = quantile(cov_data[[cov_name]], probs = c(0.05, 0.95), na.rm = TRUE),
+      log_scale = cov_name %in% config$get('log_viz'),
+      cov_label = config$get("covariates", cov_name)
+    )
+    print(cov_map)
+    dev.off()
+  }
+}
 
 
 ## Plot each covariate nationwide, excluding the largest metro areas -------------------->
