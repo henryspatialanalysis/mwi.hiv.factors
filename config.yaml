@@ -6,10 +6,10 @@ use_pca_for_clustering: true
 versions:
   census: '20240905-072347-cce9be26'
   h3_setup: '20250509-230920-52b814f3'
-  catchments: '20251024-223002-0139c90e'
-  splitting: '20251024-224705-a9b5e9d7'
-  prepared_data: '2025-10-23'
-  analysis: '2025-10-23-splits'
+  catchments: '20251027-191319-9cfa4656'
+  splitting: '20251027-204900-49d78ac7'
+  prepared_data: '2025-10-27'
+  analysis: '2025-10-27-splits'
 covariates:
   population_1km: "Population density"
   poverty: "Poverty rate"
