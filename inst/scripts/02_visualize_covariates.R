@@ -23,7 +23,7 @@ devtools::load_all(REPO_DIR)
 config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
 
 # Load input data
-cov_data <- config$read("prepared_data", "covariates_by_facility")
+cov_data <- config$read("prepared_data", "covariates_by_facility_discretized")
 catchments <- config$read("catchments", "facility_catchments")
 admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
 districts <- admin_bounds |> dplyr::filter(area_level == 3L)
@@ -184,8 +184,13 @@ dev.off()
 
 ## Plot each covariate by district ------------------------------------------------------>
 
+plot_districts <- sort(unique(catchments_with_covs$district))
+if(!is.null(config$get("subset_districts"))){
+  plot_districts <- intersect(plot_districts, config$get("subset_districts"))
+}
+
 pdf(config$get_file_path("prepared_data", "covariates_viz_by_district"), height = 8, width = 8)
-for(this_district in sort(unique(catchments_with_covs$district))){
+for(this_district in plot_districts){
   message("Running ALL plots for ", this_district)
   cov_data_sub <- cov_data[district == this_district, ]
   catchments_with_covs_sub <- catchments_with_covs[
