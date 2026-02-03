@@ -21,9 +21,14 @@ devtools::load_all(REPO_DIR)
 config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
 
 # Load colors by cluster
-cluster_colors_table <- config$read('analysis', 'cluster_colors')
-plot_colors <- cluster_colors_table$color
-names(plot_colors) <- cluster_colors_table$cluster_name
+if(file.exists(config$get_file_path('analysis', 'cluster_colors'))){
+  cluster_colors_table <- config$read('analysis', 'cluster_colors')
+  plot_colors <- cluster_colors_table$color
+  names(plot_colors) <- cluster_colors_table$cluster_name
+} else {
+  plot_colors <- RColorBrewer::brewer.pal(n = 9, name = 'Set1')
+  names(plot_colors) <- paste0('Cluster ', seq_len(9))
+}
 
 # Load spatial data for map
 catchments_sf <- config$read('catchments', 'facility_catchments')
