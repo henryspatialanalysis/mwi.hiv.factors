@@ -27,7 +27,9 @@ config$get_dir_path('analysis') |> dir.create()
 
 # Load input data
 facility_data <- config$read("prepared_data", "covariates_by_facility")
+facility_data_discretized <- config$read("prepared_data", "covariates_by_facility_discretized")
 gvh_data <- config$read("prepared_data", "covariates_by_gvh")
+gvh_data_discretized <- config$read("prepared_data", "covariates_by_gvh_discretized")
 
 # Keep catchments with highest viraemia
 top_catchments_cutoff <- config$get("top_catchments_cutoff")
@@ -112,6 +114,15 @@ if(length(split_cols) > 0L){
       catchments = top_catchments
     )
   )
+}
+
+
+if(!is.null(config$get("subset_districts"))){
+  for(grp in names(pca_list)){
+    pca_list[[grp]]$districts <- pca_list[[grp]]$districts |>
+      dplyr::filter(area_name %in% config$get("subset_districts"))
+    pca_list[[grp]]$districts$district <- pca_list[[grp]]$districts$area_name
+  }
 }
 
 # Save information about the number of catchments by PCA group
@@ -281,6 +292,7 @@ for(pca_group in pca_groups){
 
   # For particular values of k, create scatters and maps of results
   plot_k <- seq(2, max_k)
+  plot_k <- plot_k[plot_k <= 9]
   cluster_summaries_list <- list()
   for(k in plot_k){
     model_results <- kmeans_models[[k]]
@@ -314,38 +326,78 @@ for(pca_group in pca_groups){
       y = catchments_with_clusters[, c(merge_id_field, 'cluster'), with = FALSE],
       by = merge_id_field
     )
-    map_fig <- ggplot2::ggplot() +
-      ggplot2::geom_sf(
-        data = catchments_sf_sub, mapping = ggplot2::aes(fill = cluster),
-        color = '#444444', linewidth = 0.05
-      ) +
-      ggplot2::geom_sf(
-        data = pca_list[[pca_group]]$districts,
-        fill = NA, color = 'black', linewidth = 0.5
-      ) +
-      ggplot2::theme_minimal() +
-      ggplot2::ggtitle(glue::glue("{pca_group}: {k} clusters")) +
-      ggplot2::theme(
-        panel.grid = ggplot2::element_blank(),
-        axis.text = ggplot2::element_blank(),
-        axis.ticks = ggplot2::element_blank(),
-        axis.title = ggplot2::element_blank()
-      ) +
-      ggplot2::labs(fill = 'Cluster')
-    config$get_file_path('analysis', 'kmeans_map_template') |>
-      glue::glue() |>
-      png(height = 8, width = 6, units = 'in', res = 300)
-    print(map_fig)
-    dev.off()
-
+    cluster_colors <- RColorBrewer::brewer.pal(n = k, name = 'Set1')
+    names(cluster_colors) <- levels(catchments_sf_sub$cluster)
+    if(!is.null(config$get("subset_districts"))){
+      for(sub_dist in config$get("subset_districts")){
+        catchments_sf_s2 <- catchments_sf_sub |> dplyr::filter(district == sub_dist)
+        districts_sub <- pca_list[[pca_group]]$districts |>
+          dplyr::filter(district == sub_dist)
+        map_fig <- ggplot2::ggplot() +
+          ggplot2::geom_sf(
+            data = catchments_sf_s2, mapping = ggplot2::aes(fill = cluster),
+            color = '#444444', linewidth = 0.15
+          ) +
+          ggplot2::geom_sf(
+            data = districts_sub,
+            fill = NA, color = 'black', linewidth = 0.5
+          ) +
+          ggplot2::scale_fill_manual(values = cluster_colors) +
+          ggplot2::theme_minimal() +
+          ggplot2::ggtitle(glue::glue("{pca_group}: {k} clusters")) +
+          ggplot2::theme(
+            panel.grid = ggplot2::element_blank(),
+            axis.text = ggplot2::element_blank(),
+            axis.ticks = ggplot2::element_blank(),
+            axis.title = ggplot2::element_blank()
+          ) +
+          ggplot2::labs(fill = 'Cluster')
+        config$get_file_path('analysis', 'kmeans_map_template') |>
+          glue::glue() |>
+          gsub(pattern = '.png', replacement = paste0('_', sub_dist, '.png'), fixed = TRUE) |>
+          png(height = 6, width = 5, units = 'in', res = 300)
+        print(map_fig)
+        dev.off()
+      }
+    } else {
+      map_fig <- ggplot2::ggplot() +
+        ggplot2::geom_sf(
+          data = catchments_sf_sub, mapping = ggplot2::aes(fill = cluster),
+          color = '#444444', linewidth = 0.05
+        ) +
+        ggplot2::geom_sf(
+          data = pca_list[[pca_group]]$districts,
+          fill = NA, color = 'black', linewidth = 0.5
+        ) +
+        ggplot2::scale_fill_manual(values = cluster_colors) +
+        ggplot2::theme_minimal() +
+        ggplot2::ggtitle(glue::glue("{pca_group}: {k} clusters")) +
+        ggplot2::theme(
+          panel.grid = ggplot2::element_blank(),
+          axis.text = ggplot2::element_blank(),
+          axis.ticks = ggplot2::element_blank(),
+          axis.title = ggplot2::element_blank()
+        ) +
+        ggplot2::labs(fill = 'Cluster')
+      config$get_file_path('analysis', 'kmeans_map_template') |>
+        glue::glue() |>
+        png(height = 8, width = 6, units = 'in', res = 300)
+      print(map_fig)
+      dev.off()
+    }
     ## Summarize features in each cluster and compare to group overall
     cic <- data.table::copy(catchments_with_clusters[, c(cov_names, 'cluster'), with = FALSE])
+    dic <- data.table::copy(facility_data_discretized) |>
+      _[catchment_id %in% catchments_with_clusters$catchment_id, ] |>
+      _[catchments_with_clusters, cluster := i.cluster, on = 'catchment_id' ] |>
+      _[, c(cov_names, 'cluster'), with = FALSE]
     cluster_summaries_list[[paste0(k, '_cluster')]] <- list(
       cic[, lapply(.SD, mean, na.rm = T), by = cluster ][, summ := 'mean'],
       cic[, lapply(.SD, median, na.rm = T), by = cluster ][, summ := 'median'],
       cic[, lapply(.SD, sd, na.rm = T), by = cluster ][, summ := 'sd'],
       cic[, lapply(.SD, quantile, probs = 0.1, na.rm = T), by = cluster ][, summ := 'q10'],
-      cic[, lapply(.SD, quantile, probs = 0.9, na.rm = T), by = cluster ][, summ := 'q90']
+      cic[, lapply(.SD, quantile, probs = 0.9, na.rm = T), by = cluster ][, summ := 'q90'],
+      dic[, lapply(.SD, mean, na.rm = T), by = cluster ][, summ := 'pct_pos']
     ) |>
       data.table::rbindlist() |>
       data.table::melt(id.vars = c('cluster', 'summ')) |>
