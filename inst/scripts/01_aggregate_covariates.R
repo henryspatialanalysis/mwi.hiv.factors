@@ -34,6 +34,8 @@ gvh_catchments <- config$read('catchments', 'gvh_catchments', quiet = TRUE) |>
 facility_catchments <- config$read('catchments', 'facility_catchments', quiet = TRUE)
 aggregate_results <- config$read('splitting', 'aggregated_results')
 admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
+community_indicators <- config$read('community_workshops', 'indicators') |>
+  _[, c('district', 'catchment_name') := NULL ]
 
 
 ## Assign metro vs. non-metro for each facility catchment and GVH ----------------------->
@@ -161,6 +163,33 @@ for(agg_type in agg_types){
   keep_cols <- grep(pattern = '_mean$', x = colnames(hiv_by_catchment), value = TRUE)
   full_data <- cbind(full_data, hiv_by_catchment[, keep_cols, with = FALSE])
 
+  # Optionally merge on community workshop indicators
+  if(agg_type == 'facility'){
+    full_data <- merge(
+      x = full_data,
+      y = community_indicators,
+      by = merge_id_field,
+      all.x = TRUE
+    )
+  }
+
+  # Optionally subset by district
+  if(!is.null(config$get("subset_districts"))){
+    full_data <- full_data[district %in% config$get("subset_districts"), ]
+  }
+
   # Save to file
   config$write(full_data, 'prepared_data', paste0('covariates_by_', agg_type))
+
+  # Create a discretized version
+  discretized <- data.table::copy(full_data)
+  cov_names <- names(config$get('covariates'))
+  for(cov_name in cov_names){
+    discretized[[cov_name]] <- mwi.hiv.factors::discretize_covariate(discretized[[cov_name]])
+  }
+  config$write(
+    discretized,
+    'prepared_data',
+    paste0('covariates_by_', agg_type, '_discretized')
+  )
 }
