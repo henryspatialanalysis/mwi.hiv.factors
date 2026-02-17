@@ -1,8 +1,8 @@
 catchments_id_field: 'catchment_id'
 top_catchments_cutoff: 0.01
 pca_level: 'facility'
-split_pca_by: [] # ['southern', 'setting']
-subset_districts: ['Lilongwe', 'Mulanje']
+split_pca_by: ['southern', 'setting']
+subset_districts: ~ # ['Lilongwe', 'Mulanje']
 use_pca_for_clustering: true
 versions:
   census: '20240905-072347-cce9be26'
@@ -10,10 +10,10 @@ versions:
   h3_setup: '20250509-230920-52b814f3'
   catchments: '20251027-191319-9cfa4656'
   splitting: '20251027-204900-49d78ac7'
-  prepared_data: '2026-02-02-lilongwe-mulanje'
-  analysis: '2026-02-02-lilongwe-mulanje'
+  prepared_data: '2026-02-16'
+  analysis: '2026-02-16'
 covariates:
-  # population_1km: "Population density"
+  population_1km: "Population density"
   # poverty: "Poverty rate"
   # evi: "Enhanced vegetation index"
   # tt_walking: "Travel time to healthcare (walking)"
@@ -43,16 +43,17 @@ covariates:
   # latitude: "Latitude"
   # longitude: "Longitude"
   # people_near_forest: 'Forest-proximate people'
-  mobility: 'Mobility'
-  econ_activity: 'Economic activity'
-  pop_growth: 'Population growth'
-  weather: 'Extreme weather events'
+  # mobility: 'Mobility'
+  # econ_activity: 'Economic activity'
+  # pop_growth: 'Population growth'
+  # weather: 'Extreme weather events'
 pca_covariates:
   distance_border_posts: "Distance to border posts"
   distance_towns: "Distance to towns (population>20k)"
   distance_borders: "Distance to national borders"
-  landuse_hard_commodities: 'Landuse: hard commodities'
-  landuse_logging: 'Landuse: logging'
+  landuse_logging_or_hard_commodities: "Landuse: logging, drilling, or mining"
+  # landuse_hard_commodities: 'Landuse: hard commodities'
+  # landuse_logging: 'Landuse: logging'
   distance_admarc: "Distance to ADMARC facilities"
   landuse_agriculture: 'Landuse: agriculture'
   # cropland_carbon_loss: 'Carbon loss from cropland'
@@ -75,10 +76,10 @@ pca_covariates:
   # evapotranspiration: 'Evapotranspiration'
   # tt_motorized: "Travel time (vehicle)"
   # log_ntl: "Nighttime lights"
-  mobility: 'Mobility'
-  econ_activity: 'Economic activity'
-  pop_growth: 'Population growth'
-  weather: 'Extreme weather events'
+  # mobility: 'Mobility'
+  # econ_activity: 'Economic activity'
+  # pop_growth: 'Population growth'
+  # weather: 'Extreme weather events'
 log_transformed: ['log_population_1km', 'log_ntl']
 log_viz: ['population_1km', 'ntl']
 directories:
@@ -184,8 +185,10 @@ directories:
       aggregation_table_gvh: 'aggregation_table_gvh.csv'
       covariates_by_facility: 'covariates_by_facility.csv'
       covariates_by_facility_discretized: 'covariates_by_facility_discretized.csv'
+      covariates_by_facility_cutoffs: 'covariates_by_facility_cutoffs.csv'
       covariates_by_gvh: 'covariates_by_gvh.csv'
       covariates_by_gvh_discretized: 'covariates_by_gvh_discretized.csv'
+      covariates_by_gvh_cutoffs: 'covariates_by_gvh_cutoffs.csv'
       covariates_viz: "covariates_by_catchment.pdf"
       covariates_viz_top_catchments: "covariates_by_catchment_top_catchments.pdf"
       covariates_viz_no_metros: "covariates_by_catchment_no_metros.pdf"
