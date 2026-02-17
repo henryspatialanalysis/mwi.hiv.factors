@@ -66,6 +66,8 @@ create_covariate_map <- function(
 #' @param col_lims (`numeric(2)`, default `c(0, 1)`) Color limits for the outcome variable
 #' @param log_scale (`logical(1)`, default `FALSE`) Whether to plot the outcome variable
 #'   on a log scale
+#' @param vlines (`data.frame`, default `NULL`) Data.frame with two fields: `label` and
+#'   `x`. Each row is a vertical line to add to the plot.
 #'
 #' @return Plots the three panel plot to the active graphics device, returns NULL
 #'
@@ -76,7 +78,8 @@ create_covariate_map <- function(
 create_three_panel_plot <- function(
   catchments_with_covs, cov_data, district_bounds, cov_field, viraemia_field, pop_field,
   plot_title, cov_label, hist_num_breaks = 30,
-  outcome_colors = viridis::viridis(n = 100), col_lims = c(0, 1), log_scale = FALSE
+  outcome_colors = viridis::viridis(n = 100), col_lims = c(0, 1), log_scale = FALSE,
+  vlines = NULL
 ){
   # Prepare input data
   catchments_with_covs$THIS_COV <- catchments_with_covs[[cov_field]]
@@ -112,24 +115,52 @@ create_three_panel_plot <- function(
       colors = outcome_colors, limits = col_lims, oob = scales::squish,
       guide = 'none'
     ) +
-    ggplot2::labs(x = cov_label, y = 'Count') +
+    ggplot2::labs(x = cov_label, y = 'Count', color = '') +
     ggplot2::theme_minimal()
 
   # Plot 3: Scatterplot with viraemia as the outcome
   p3 <- ggplot2::ggplot(data = cov_data) +
     ggplot2::geom_point(
+      pch = 21,
       mapping = ggplot2::aes(
-        x = THIS_COV, y = VIRAEMIA, size = POPULATION, color = THIS_COV
-      )
+        x = THIS_COV, y = VIRAEMIA, size = POPULATION, fill = THIS_COV
+      ), stroke = 0.25
     ) +
     ggplot2::scale_size_continuous(guide = 'none') +
-    ggplot2::scale_color_gradientn(
+    ggplot2::scale_fill_gradientn(
       colors = outcome_colors, limits = col_lims, oob = scales::squish,
       guide = 'none'
     ) +
     ggplot2::scale_y_continuous(labels = scales::percent) +
-    ggplot2::labs(x = cov_label, y = 'HIV Viraemia') +
+    ggplot2::labs(x = cov_label, y = 'HIV Viraemia', color = '') +
     ggplot2::theme_minimal()
+
+  if(!is.null(vlines)){
+    # Create custom color palette for vertical lines
+    all_line_colors <- c(
+      "#A65628", "#377EB8", "#F781BF", "#E41A1C", "#4DAF4A", "#FFFF33",
+      "#984EA3", "#FF7F00", "#999999"
+    )
+    unique_labels <- sort(unique(vlines$label))
+    line_colors <- all_line_colors[seq_along(unique_labels)]
+    names(line_colors) <- unique_labels
+    # Add to the histogram and scatter plots
+    p2 <- p2 +
+      ggplot2::geom_vline(
+        data = vlines,
+        mapping = ggplot2::aes(xintercept = x, color = label),
+        linetype = 2
+      ) +
+      ggplot2::scale_color_manual(values = line_colors) +
+      ggplot2::theme(legend.position = 'bottom')
+    p3 <- p3 +
+      ggplot2::geom_vline(
+        data = vlines,
+        mapping = ggplot2::aes(xintercept = x, color = label),
+        linetype = 2
+      ) +
+      ggplot2::scale_color_manual(values = line_colors, guide = 'none')
+  }
 
   # Assemble onto a single page
   gridExtra::grid.arrange(

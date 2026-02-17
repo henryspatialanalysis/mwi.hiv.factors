@@ -16,7 +16,8 @@ create_three_panel_plot(
   hist_num_breaks = 30,
   outcome_colors = viridis::viridis(n = 100),
   col_lims = c(0, 1),
-  log_scale = FALSE
+  log_scale = FALSE,
+  vlines = NULL
 )
 }
 \arguments{
@@ -46,6 +47,9 @@ the outcome variable}
 
 \item{log_scale}{(\code{logical(1)}, default \code{FALSE}) Whether to plot the outcome variable
 on a log scale}
+
+\item{vlines}{(\code{data.frame}, default \code{NULL}) Data.frame with two fields: \code{label} and
+\code{x}. Each row is a vertical line to add to the plot.}
 }
 \value{
 Plots the three panel plot to the active graphics device, returns NULL
