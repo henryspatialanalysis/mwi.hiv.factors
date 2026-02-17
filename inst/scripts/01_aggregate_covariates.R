@@ -182,14 +182,12 @@ for(agg_type in agg_types){
   config$write(full_data, 'prepared_data', paste0('covariates_by_', agg_type))
 
   # Create a discretized version
-  discretized <- data.table::copy(full_data)
+  discretized <- data.table::copy(full_data)[
+    viraemia15to49_mean >= config$get("top_catchments_cutoff"),
+  ]
   cov_names <- names(config$get('covariates'))
   cov_cutoffs_list <- list()
   for(cov_name in cov_names){
-    d_sub <- discretized[
-      viraemia15to49_mean >= config$get("top_catchments_cutoff"),
-      get(cov_name)
-    ]
     d_list <- mwi.hiv.factors::discretize_covariate(discretized[[cov_name]])
     if(!is.null(d_list)){
       # Create a table of cutoffs
