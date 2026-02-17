@@ -4,13 +4,23 @@
 \alias{discretize_covariate}
 \title{Discretize a covariate}
 \usage{
-discretize_covariate(vec)
+discretize_covariate(vec, num_jenks = 5)
 }
 \arguments{
 \item{vec}{(\href{N}{numeric}) Vector of values}
+
+\item{num_jenks([integer](1))}{Number of Jenks natural breaks to use}
 }
 \value{
-Vector of discretized (0/1) values
+List with six items:
+\itemize{
+\item \code{quintiles}: Vector of quintile cutoffs
+\item \code{q1}: Bottom quintile
+\item \code{q5}: Top quintile
+\item \code{jenks}: Jenks natural breaks classification
+\item \code{j1}: Bottom Jenks class
+\item \code{jtop}: Top Jenks class
+}
 }
 \description{
 Discretize a covariate
