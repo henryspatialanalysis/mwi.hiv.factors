@@ -28,19 +28,13 @@ config$get_dir_path('analysis') |> dir.create()
 # Load input data
 facility_data <- config$read("prepared_data", "covariates_by_facility")
 facility_data_discretized <- config$read("prepared_data", "covariates_by_facility_discretized")
-gvh_data <- config$read("prepared_data", "covariates_by_gvh")
-gvh_data_discretized <- config$read("prepared_data", "covariates_by_gvh_discretized")
 
 # Keep catchments with highest viraemia
 top_catchments_cutoff <- config$get("top_catchments_cutoff")
 top_facilities <- facility_data[viraemia15to49_mean >= top_catchments_cutoff, ]
-if(config$get("pca_level") == "facility"){
-  top_catchments <- data.table::copy(top_facilities)
-  catchments_sf <- config$read('catchments', 'facility_catchments')
-} else {
-  top_catchments <- gvh_data[catchment_id %in% top_facilities$catchment_id, ]
-  catchments_sf <- config$read('catchments', 'gvh_catchments')
-}
+top_catchments <- data.table::copy(top_facilities)
+catchments_sf <- config$read('catchments', 'facility_catchments')
+
 # Load catchment and district polygons (will be used for maps later)
 admin_bounds <- config$read("catchments", "admin_bounds")
 districts_sf <- admin_bounds |>
@@ -117,7 +111,7 @@ if(length(split_cols) > 0L){
 }
 
 
-if(!is.null(config$get("subset_districts"))){
+if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){
   for(grp in names(pca_list)){
     pca_list[[grp]]$districts <- pca_list[[grp]]$districts |>
       dplyr::filter(area_name %in% config$get("subset_districts"))
@@ -328,7 +322,7 @@ for(pca_group in pca_groups){
     )
     cluster_colors <- RColorBrewer::brewer.pal(n = k, name = 'Set1')
     names(cluster_colors) <- levels(catchments_sf_sub$cluster)
-    if(!is.null(config$get("subset_districts"))){
+    if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){
       for(sub_dist in config$get("subset_districts")){
         catchments_sf_s2 <- catchments_sf_sub |> dplyr::filter(district == sub_dist)
         districts_sub <- pca_list[[pca_group]]$districts |>
@@ -387,19 +381,28 @@ for(pca_group in pca_groups){
     }
     ## Summarize features in each cluster and compare to group overall
     cic <- data.table::copy(catchments_with_clusters[, c(cov_names, 'cluster'), with = FALSE])
-    dic <- data.table::copy(facility_data_discretized) |>
-      _[catchment_id %in% catchments_with_clusters$catchment_id, ] |>
-      _[catchments_with_clusters, cluster := i.cluster, on = 'catchment_id' ] |>
-      _[, c(cov_names, 'cluster'), with = FALSE]
-    cluster_summaries_list[[paste0(k, '_cluster')]] <- list(
+    working_list <- list(
       cic[, lapply(.SD, mean, na.rm = T), by = cluster ][, summ := 'mean'],
       cic[, lapply(.SD, median, na.rm = T), by = cluster ][, summ := 'median'],
       cic[, lapply(.SD, sd, na.rm = T), by = cluster ][, summ := 'sd'],
       cic[, lapply(.SD, quantile, probs = 0.1, na.rm = T), by = cluster ][, summ := 'q10'],
-      cic[, lapply(.SD, quantile, probs = 0.9, na.rm = T), by = cluster ][, summ := 'q90'],
-      dic[, lapply(.SD, mean, na.rm = T), by = cluster ][, summ := 'pct_pos']
-    ) |>
-      data.table::rbindlist() |>
+      cic[, lapply(.SD, quantile, probs = 0.9, na.rm = T), by = cluster ][, summ := 'q90']
+    )
+    for(discrete_summary in c('q1', 'q5', 'j1', 'jtop')){
+      glyph <- paste0('_', discrete_summary, '$')
+      binary_cols <- colnames(facility_data_discretized) |>
+        grep(pattern = glyph, value = TRUE)
+      if(length(binary_cols) > 0){
+        working_list[[discrete_summary]] <- data.table::copy(facility_data_discretized) |>
+          _[catchment_id %in% catchments_with_clusters$catchment_id, ] |>
+          _[catchments_with_clusters, cluster := i.cluster, on = 'catchment_id' ] |>
+          _[, c(binary_cols, 'cluster'), with = FALSE] |>
+          _[, lapply(.SD, mean, na.rm = T), by = cluster ][, summ := discrete_summary] |>
+          data.table::setnames(old = binary_cols, new = gsub(glyph, '', binary_cols))
+      }
+    }
+    cluster_summaries_list[[paste0(k, '_cluster')]] <- working_list |>
+      data.table::rbindlist(use.names = TRUE, fill = TRUE) |>
       data.table::melt(id.vars = c('cluster', 'summ')) |>
       data.table::dcast('variable + cluster ~ summ', value.var = 'value') |>
       _[, n_clusters := k ]

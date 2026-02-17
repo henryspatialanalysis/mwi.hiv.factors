@@ -69,7 +69,7 @@ if(file.exists(id_raster_fp)){
 pop <- pop |> terra::crop(id_raster) |> terra::extend(id_raster)
 pop[is.na(pop) & !is.na(id_raster)] <- 0
 
-agg_types <- c('facility', 'gvh')
+agg_types <- c('facility') # c('facility', 'gvh')
 agg_tables <- vector('list', length = length(agg_types))
 names(agg_tables) <- agg_types
 for(agg_type in agg_types){
@@ -174,7 +174,7 @@ for(agg_type in agg_types){
   }
 
   # Optionally subset by district
-  if(!is.null(config$get("subset_districts"))){
+  if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){
     full_data <- full_data[district %in% config$get("subset_districts"), ]
   }
 
@@ -184,12 +184,39 @@ for(agg_type in agg_types){
   # Create a discretized version
   discretized <- data.table::copy(full_data)
   cov_names <- names(config$get('covariates'))
+  cov_cutoffs_list <- list()
   for(cov_name in cov_names){
-    discretized[[cov_name]] <- mwi.hiv.factors::discretize_covariate(discretized[[cov_name]])
+    d_sub <- discretized[
+      viraemia15to49_mean >= config$get("top_catchments_cutoff"),
+      get(cov_name)
+    ]
+    d_list <- mwi.hiv.factors::discretize_covariate(discretized[[cov_name]])
+    if(!is.null(d_list)){
+      # Create a table of cutoffs
+      cov_cutoffs_list[[cov_name]] <- matrix(
+        c(d_list$quintiles, d_list$jenks),
+        nrow = 1
+      ) |> as.data.table()
+      colnames(cov_cutoffs_list[[cov_name]]) <- c(
+        paste0('q', seq(0, length(d_list$quintiles) - 1)),
+        paste0('j', seq(0, length(d_list$jenks) - 1))
+      )
+      cov_cutoffs_list[[cov_name]]$cov_name <- cov_name
+      # Create a table of discretized values
+      d_table <- as.data.table(d_list[c('q1', 'q5', 'j1', 'jtop')])
+      colnames(d_table) <- paste0(cov_name, '_', c('q1', 'q5', 'j1', 'jtop'))
+      discretized <- cbind(discretized, d_table)
+    }
   }
   config$write(
     discretized,
     'prepared_data',
     paste0('covariates_by_', agg_type, '_discretized')
+  )
+  cov_cutoffs_table <- data.table::rbindlist(cov_cutoffs_list)
+  config$write(
+    cov_cutoffs_table,
+    'prepared_data',
+    paste0('covariates_by_', agg_type, '_cutoffs')
   )
 }
