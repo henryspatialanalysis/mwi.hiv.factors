@@ -14,7 +14,7 @@ create_three_panel_plot(
   plot_title,
   cov_label,
   hist_num_breaks = 30,
-  outcome_colors = viridis::viridis(n = 100),
+  outcome_colors = viridisLite::viridis(n = 100),
   col_lims = c(0, 1),
   log_scale = FALSE,
   vlines = NULL
@@ -40,7 +40,7 @@ covariate data, viraemia, and population}
 
 \item{hist_num_breaks}{(\code{integer(1)}, default 30) Number of breaks for the histogram}
 
-\item{outcome_colors}{(\code{character(N)}, default \code{viridis::viridis(n = 100)}) Colors for
+\item{outcome_colors}{(\code{character(N)}, default \code{viridisLite::viridis(n = 100)}) Colors for
 the outcome variable}
 
 \item{col_lims}{(\code{numeric(2)}, default \code{c(0, 1)}) Color limits for the outcome variable}

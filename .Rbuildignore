@@ -1,2 +1,3 @@
 ^LICENSE\.md$
 ^Makefile$
+^config_*.yaml$

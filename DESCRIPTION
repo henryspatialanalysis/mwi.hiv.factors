@@ -9,6 +9,17 @@ Description: |>
     Malawi.
 Depends:
     R (>= 4.1.0)
+Imports:
+    BAMMtools,
+    data.table,
+    ggplot2,
+    ggrepel,
+    gridExtra,
+    mbg,
+    scales,
+    sf,
+    terra,
+    viridisLite
 Suggests:
     versioning
 License: MIT + file LICENSE

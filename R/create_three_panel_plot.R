@@ -61,7 +61,7 @@ create_covariate_map <- function(
 #' @param plot_title (`character(1)`) Title for the overall plot
 #' @param cov_label (`character(1)`) Label for the covariate
 #' @param hist_num_breaks (`integer(1)`, default 30) Number of breaks for the histogram
-#' @param outcome_colors (`character(N)`, default `viridis::viridis(n = 100)`) Colors for
+#' @param outcome_colors (`character(N)`, default `viridisLite::viridis(n = 100)`) Colors for
 #'   the outcome variable
 #' @param col_lims (`numeric(2)`, default `c(0, 1)`) Color limits for the outcome variable
 #' @param log_scale (`logical(1)`, default `FALSE`) Whether to plot the outcome variable
@@ -71,14 +71,15 @@ create_covariate_map <- function(
 #'
 #' @return Plots the three panel plot to the active graphics device, returns NULL
 #'
-#' @import ggplot2 scales viridis data.table
+#' @import ggplot2 scales data.table
+#' @importFrom viridisLite viridis
 #' @importFrom gridExtra grid.arrange
 #' @importFrom graphics hist
 #' @export
 create_three_panel_plot <- function(
   catchments_with_covs, cov_data, district_bounds, cov_field, viraemia_field, pop_field,
   plot_title, cov_label, hist_num_breaks = 30,
-  outcome_colors = viridis::viridis(n = 100), col_lims = c(0, 1), log_scale = FALSE,
+  outcome_colors = viridisLite::viridis(n = 100), col_lims = c(0, 1), log_scale = FALSE,
   vlines = NULL
 ){
   # Prepare input data

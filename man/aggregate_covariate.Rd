@@ -17,6 +17,9 @@ aggregate_covariate(
 
 \item{template}{(\link[terra:SpatRaster-class]{terra::SpatRaster}) Template raster to use for aggregation}
 
+\item{agg_table}{(\link[data.table:data.table]{data.table::data.table}) Aggregation table to use, created by
+\code{\link[mbg:build_aggregation_table]{mbg::build_aggregation_table()}}}
+
 \item{resample_method}{(character(1), default 'bilinear') Resampling method to use
 for the covariate raster. See \code{\link[terra:resample]{terra::resample()}} for options.}
 

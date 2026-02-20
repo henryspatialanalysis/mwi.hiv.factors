@@ -9,7 +9,7 @@ discretize_covariate(vec, num_jenks = 5)
 \arguments{
 \item{vec}{(\href{N}{numeric}) Vector of values}
 
-\item{num_jenks([integer](1))}{Number of Jenks natural breaks to use}
+\item{num_jenks}{(\href{1}{integer}) Number of Jenks natural breaks to use}
 }
 \value{
 List with six items:

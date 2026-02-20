@@ -58,6 +58,7 @@ letters_ref <- function(){
 #' @import ggplot2 data.table
 #' @importFrom sf st_as_sf st_intersects st_crs st_bbox
 #' @importFrom ggrepel geom_label_repel
+#' @importFrom grDevices png dev.off
 #' @export
 district_plot <- function(
   district_name, districts_sf, catchments_sf, catchment_colors, facility_data, out_fp

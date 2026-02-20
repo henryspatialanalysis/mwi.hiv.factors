@@ -4,6 +4,8 @@
 #'
 #' @param cov ([terra::SpatRaster]) Covariate to aggregate
 #' @param template ([terra::SpatRaster]) Template raster to use for aggregation
+#' @param agg_table ([data.table::data.table]) Aggregation table to use, created by
+#'   [mbg::build_aggregation_table()]
 #' @param resample_method (character(1), default 'bilinear') Resampling method to use
 #'   for the covariate raster. See [terra::resample()] for options.
 #' @param ... Additional arguments passed to [mbg::aggregate_raster_to_polygons()]

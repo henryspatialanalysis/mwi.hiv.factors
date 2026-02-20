@@ -1,7 +1,7 @@
 #' Discretize a covariate
 #'
 #' @param vec ([numeric](N)) Vector of values
-#' @param num_jenks([integer](1)) Number of Jenks natural breaks to use
+#' @param num_jenks ([integer](1)) Number of Jenks natural breaks to use
 #' @return List with six items:
 #' \itemize{
 #'   \item `quintiles`: Vector of quintile cutoffs
