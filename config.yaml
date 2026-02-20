@@ -1,8 +1,8 @@
 catchments_id_field: 'catchment_id'
 top_catchments_cutoff: 0.01
 pca_level: 'facility'
-split_pca_by: ['southern', 'setting']
-subset_districts: ~ # ['Lilongwe', 'Mulanje']
+split_pca_by: ['setting'] # Can also add 'southern' to split by region
+subset_districts: ['Lilongwe', 'Mulanje']
 use_pca_for_clustering: true
 versions:
   census: '20240905-072347-cce9be26'
@@ -76,10 +76,10 @@ pca_covariates:
   # evapotranspiration: 'Evapotranspiration'
   # tt_motorized: "Travel time (vehicle)"
   # log_ntl: "Nighttime lights"
-  # mobility: 'Mobility'
-  # econ_activity: 'Economic activity'
-  # pop_growth: 'Population growth'
-  # weather: 'Extreme weather events'
+  mobility: 'Mobility'
+  econ_activity: 'Economic activity'
+  pop_growth: 'Population growth'
+  weather: 'Extreme weather events'
 log_transformed: ['log_population_1km', 'log_ntl']
 log_viz: ['population_1km', 'ntl']
 directories:
