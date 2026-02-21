@@ -34,8 +34,6 @@ gvh_catchments <- config$read('catchments', 'gvh_catchments', quiet = TRUE) |>
 facility_catchments <- config$read('catchments', 'facility_catchments', quiet = TRUE)
 aggregate_results <- config$read('splitting', 'aggregated_results')
 admin_bounds <- config$read("catchments", "admin_bounds", quiet = TRUE)
-community_indicators <- config$read('community_workshops', 'indicators') |>
-  _[, c('district', 'catchment_name') := NULL ]
 
 
 ## Assign metro vs. non-metro for each facility catchment and GVH ----------------------->
@@ -162,16 +160,6 @@ for(agg_type in agg_types){
   }
   keep_cols <- grep(pattern = '_mean$', x = colnames(hiv_by_catchment), value = TRUE)
   full_data <- cbind(full_data, hiv_by_catchment[, keep_cols, with = FALSE])
-
-  # Optionally merge on community workshop indicators
-  if(agg_type == 'facility'){
-    full_data <- merge(
-      x = full_data,
-      y = community_indicators,
-      by = merge_id_field,
-      all.x = TRUE
-    )
-  }
 
   # Optionally subset by district
   if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){

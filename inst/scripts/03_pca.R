@@ -20,7 +20,6 @@ lapply(load_pkgs, library, character.only = TRUE) |> invisible()
 
 # Load config
 config <- versioning::Config$new(file.path(REPO_DIR, 'config.yaml'))
-# config <- versioning::Config$new(file.path(REPO_DIR, 'config_metro.yaml'))
 
 # Create analysis directory
 config$get_dir_path('analysis') |> dir.create()
@@ -41,6 +40,8 @@ districts_sf <- admin_bounds |>
   dplyr::filter(area_level == 3L)
 facility_metadata <- config$read('catchments', 'facility_metadata')
 
+# Set covariates that might be dropped from metro-only PCA
+drop_from_metro <- config$get("drop_from_metro", fail_if_null = FALSE)
 
 ## DATA PREPARATION --------------------------------------------------------------------->
 
@@ -70,7 +71,7 @@ districts_sf$southern <- ifelse(
 # Add facility location to catchment data
 (top_catchments
   [ is.na(in_municipality), in_municipality := 0L ]
-  [, setting := ifelse(in_municipality == 1L, 'Municipal', 'Non-municipal') ]
+  [, setting := ifelse(in_municipality == 1L, 'Metro', 'Non-metro') ]
   [, southern := ifelse(region == 'Southern', 'Southern', 'Non-southern') ]
 )
 
@@ -120,7 +121,9 @@ if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){
 }
 
 # Save information about the number of catchments by PCA group
-n_catchments_by_group <- top_catchments[, .(n_catchments = uniqueN(catchment_id)), by = group_label]
+n_catchments_by_group <- top_catchments[
+  , .(n_catchments = uniqueN(catchment_id)), by = group_label
+]
 config$write(n_catchments_by_group, 'analysis', 'pca_groups')
 
 
@@ -134,7 +137,16 @@ for(pca_group in pca_groups){
   message(msg)
   tictoc::tic(msg)
 
+  # Determine covariates to include in this PCA
   cov_names <- names(config$get("pca_covariates"))
+  pca_covs <- config$get('pca_covariates') |>
+    unlist() |>
+    gsub(pattern = ' ', replacement = '\n')
+  if(grepl("Metro", pca_group)){
+    cov_names <- setdiff(cov_names, drop_from_metro)
+    pca_covs <- pca_covs[cov_names]
+  }
+
   catchments_sub <- pca_list[[pca_group]]$catchments
   pca_data <- catchments_sub[, cov_names, with = FALSE] |>
     scale() |>
@@ -152,9 +164,7 @@ for(pca_group in pca_groups){
   pca_data <- pca_data |>
     data.table::setnames(
       old = cov_names,
-      new = config$get('pca_covariates') |>
-        unlist() |>
-        gsub(pattern = ' ', replacement = '\n'),
+      new = pca_covs,
       skip_absent = TRUE
     )
   # If there are more features than catchments, remove the most collinear features based

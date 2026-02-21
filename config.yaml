@@ -2,16 +2,16 @@ catchments_id_field: 'catchment_id'
 top_catchments_cutoff: 0.01
 pca_level: 'facility'
 split_pca_by: ['setting'] # Can also add 'southern' to split by region
-subset_districts: ['Lilongwe', 'Mulanje']
+subset_districts: ['Lilongwe', 'Mulanje'] # Add other districts to subset by
 use_pca_for_clustering: true
 versions:
   census: '20240905-072347-cce9be26'
-  community_workshops: '2026-02-02'
+  community_workshops: '2026-02-20-workshop-test'
   h3_setup: '20250509-230920-52b814f3'
   catchments: '20251027-191319-9cfa4656'
   splitting: '20251027-204900-49d78ac7'
-  prepared_data: '2026-02-16'
-  analysis: '2026-02-16'
+  prepared_data: '2026-02-20-test'
+  analysis: '2026-02-20-test'
 covariates:
   population_1km: "Population density"
   # poverty: "Poverty rate"
@@ -43,10 +43,10 @@ covariates:
   # latitude: "Latitude"
   # longitude: "Longitude"
   # people_near_forest: 'Forest-proximate people'
-  # mobility: 'Mobility'
-  # econ_activity: 'Economic activity'
-  # pop_growth: 'Population growth'
-  # weather: 'Extreme weather events'
+  mobility: 'Mobility'
+  econ_activity: 'Economic activity'
+  pop_growth: 'Population growth'
+  weather: 'Extreme weather events'
 pca_covariates:
   distance_border_posts: "Distance to border posts"
   distance_towns: "Distance to towns (population>20k)"
@@ -214,4 +214,12 @@ directories:
       cluster_colors: 'cluster_colors.csv'
       gvh_covariate_viz: 'gvh_covariate_viz.pdf'
       gvh_regressions_by_archetype: 'gvh_regressions_by_archetype.csv'
-
+drop_from_metro: [
+  'distance_border_posts',
+  'distance_towns',
+  'distance_borders',
+  'distance_admarc'
+]
+cluster_counts:
+  "Metro": 3
+  "Non-metro": 5
