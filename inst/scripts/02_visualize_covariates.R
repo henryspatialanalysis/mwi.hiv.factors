@@ -71,36 +71,40 @@ d_to_r <- districts |>
 catchments_with_covs <- merge(catchments_with_covs, d_to_r, by = 'district')
 
 
-# ## Plot each covariate nationwide ----------------------------------------------------->
+## Plot each covariate nationwide ----------------------------------------------------->
 
-# pdf(config$get_file_path("prepared_data", "covariates_viz"), height = 8, width = 8)
-# for(cov_name in cov_names){
-#   message("Preparing plots for ", cov_name)
-#   cov_label <- config$get("covariates", cov_name)
-#   mwi.hiv.factors::create_three_panel_plot(
-#     catchments_with_covs = catchments_with_covs,
-#     cov_data = cov_data,
-#     district_bounds = districts,
-#     cov_field = cov_name,
-#     viraemia_field = 'viraemia15to49_mean',
-#     pop_field = 'population_1km',
-#     plot_title = paste(cov_label, 'by health facility catchment'),
-#     cov_label = cov_label,
-#     hist_num_breaks = 30,
-#     outcome_colors = outcome_colors,
-#     col_lims = quantile(cov_data$THIS_COV, probs = c(0.05, 0.95), na.rm = TRUE),
-#     vlines = cutoffs_long[this_cov == cov_name, ]
-#   )
-# }
-# dev.off()
+pdf(config$get_file_path("prepared_data", "covariates_viz"), height = 8, width = 8)
+for(cov_name in cov_names){
+  message("Preparing plots for ", cov_name)
+  cov_label <- config$get("covariates", cov_name)
+  mwi.hiv.factors::create_three_panel_plot(
+    catchments_with_covs = catchments_with_covs,
+    cov_data = cov_data,
+    district_bounds = districts,
+    cov_field = cov_name,
+    viraemia_field = 'viraemia15to49_mean',
+    pop_field = 'population_1km',
+    plot_title = paste(cov_label, 'by health facility catchment'),
+    cov_label = cov_label,
+    hist_num_breaks = 30,
+    outcome_colors = outcome_colors,
+    col_lims = quantile(cov_data$THIS_COV, probs = c(0.05, 0.95), na.rm = TRUE)
+  )
+}
+dev.off()
 
 
 ## Plot each covariate nationwide, only for top catchments ------------------------------>
 
 top_catchments_cutoff <- config$get("top_catchments_cutoff")
-cov_data_top <- cov_data[viraemia15to49_mean >= top_catchments_cutoff, ]
+iit_facilities <- config$get("iit_facilities")
+cov_data_top <- cov_data[
+  (viraemia15to49_mean >= top_catchments_cutoff) |
+  (catchment_name %in% iit_facilities),
+]
 catchments_with_covs_top <- catchments_with_covs[
-  catchments_with_covs$viraemia15to49_mean >= top_catchments_cutoff,
+  (catchments_with_covs$viraemia15to49_mean >= top_catchments_cutoff) |
+  (catchments_with_covs$catchment_name %in% iit_facilities),
 ]
 
 pdf(config$get_file_path("prepared_data", "covariates_viz_top_catchments"), height = 8, width = 8)
@@ -128,19 +132,27 @@ dev.off()
 ## Plot each covariate by district ------------------------------------------------------>
 
 plot_districts <- sort(unique(catchments_with_covs$district))
-if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){
-  plot_districts <- intersect(plot_districts, config$get("subset_districts"))
+subset_districts <- config$get("subset_districts", fail_if_null = FALSE) |>
+  setdiff(NA)
+if(length(subset_districts) > 0){
+  plot_districts <- intersect(plot_districts, subset_districts)
 }
 
 pdf(config$get_file_path("prepared_data", "covariates_viz_by_district"), height = 8, width = 8)
 for(this_district in plot_districts){
   message("Running top catchment plots for ", this_district)
   cov_data_sub <- cov_data[
-    (district == this_district) & (viraemia15to49_mean >= top_catchments_cutoff),
+    (district == this_district) & (
+      (viraemia15to49_mean >= top_catchments_cutoff) |
+      (catchment_name %in% iit_facilities)
+    ),
   ]
   catchments_with_covs_sub <- catchments_with_covs[
     (catchments_with_covs$district == this_district) &
-    (catchments_with_covs$viraemia15to49_mean >= top_catchments_cutoff),
+    (
+      (catchments_with_covs$viraemia15to49_mean >= top_catchments_cutoff) |
+      (catchments_with_covs$catchment_name %in% iit_facilities)
+    ),
   ]
   districts_sub <- districts[districts$area_name == this_district, ]
   if(nrow(cov_data_sub) > 0){
@@ -178,11 +190,17 @@ for(cutoff_type in names(cutoffs_list)){
   for(this_district in plot_districts){
     message("Running plots for ", this_district)
     cov_data_sub <- cov_data[
-      (district == this_district) & (viraemia15to49_mean >= top_catchments_cutoff),
+      (district == this_district) & (
+        (viraemia15to49_mean >= top_catchments_cutoff) |
+        (catchment_name %in% iit_facilities)
+      ),
     ]
     catchments_with_covs_sub <- catchments_with_covs[
       (catchments_with_covs$district == this_district) &
-      (catchments_with_covs$viraemia15to49_mean >= top_catchments_cutoff),
+      (
+        (catchments_with_covs$viraemia15to49_mean >= top_catchments_cutoff) |
+        (catchments_with_covs$catchment_name %in% iit_facilities)
+      ),
     ]
     districts_sub <- districts[districts$area_name == this_district, ]
     if(nrow(catchments_with_covs_sub) > 0){

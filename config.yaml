@@ -223,3 +223,10 @@ drop_from_metro: [
 cluster_counts:
   "Metro": 3
   "Non-metro": 5
+iit_facilities: [
+  'Chikwawa District Hospital',
+  'Mponela Rural Hospital',
+  'Kaluluma Rural Hospital',
+  'Kasungu District Hospital'
+]
+community_indicators: ['mobility', 'econ_activity', 'pop_growth', 'weather']

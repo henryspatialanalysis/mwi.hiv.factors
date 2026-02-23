@@ -90,7 +90,9 @@ for(agg_type in agg_types){
 
 ## LOAD AND AGGREGATE EACH COVARIATE ---------------------------------------------------->
 
-cov_names <- names(config$get('covariates'))
+cov_names <- config$get('covariates') |>
+  names() |>
+  setdiff(config$get('community_indicators'))
 cov_tables <- vector('list', length = length(cov_names))
 names(cov_tables) <- cov_names
 all_cov_tables <- list()
@@ -162,7 +164,9 @@ for(agg_type in agg_types){
   full_data <- cbind(full_data, hiv_by_catchment[, keep_cols, with = FALSE])
 
   # Optionally subset by district
-  if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){
+  subset_districts <- config$get("subset_districts", fail_if_null = FALSE) |>
+    setdiff(NA)
+  if(length(subset_districts) > 0){
     full_data <- full_data[district %in% config$get("subset_districts"), ]
   }
 

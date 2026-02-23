@@ -30,8 +30,12 @@ facility_data_discretized <- config$read("prepared_data", "covariates_by_facilit
 
 # Keep catchments with highest viraemia
 top_catchments_cutoff <- config$get("top_catchments_cutoff")
-top_facilities <- facility_data[viraemia15to49_mean >= top_catchments_cutoff, ]
-top_catchments <- data.table::copy(top_facilities)
+iit_facilities <- config$get('iit_facilities')
+top_catchments <- facility_data[
+  (viraemia15to49_mean >= top_catchments_cutoff) |
+  (catchment_name %in% iit_facilities),
+] |>
+  data.table::copy()
 catchments_sf <- config$read('catchments', 'facility_catchments')
 
 # Load catchment and district polygons (will be used for maps later)
