@@ -106,7 +106,7 @@ directories:
       h3_polys: 'artefacts/h3_boundaries.gpkg'
   catchments:
     versioned: TRUE
-    path: '~/repos/respond-map-prep/archive/assign_catchments'
+    path: '/mnt/c/Users/nathe/Dropbox/RESPOND_Community Archetyping/Datasets/catchments'
     files:
       gvh_catchments: 'artefacts/gvh_catchments.gpkg'
       gvh_meta: 'artefacts/h3_catchments.csv'
