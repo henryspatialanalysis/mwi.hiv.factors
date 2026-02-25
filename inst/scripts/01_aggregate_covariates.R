@@ -175,7 +175,8 @@ for(agg_type in agg_types){
 
   # Create a discretized version
   discretized <- data.table::copy(full_data)[
-    viraemia15to49_mean >= config$get("top_catchments_cutoff"),
+    (viraemia15to49_mean >= config$get("top_catchments_cutoff")) |
+    (catchment_name %in% config$get('iit_facilities')),
   ]
   cov_names <- names(config$get('covariates'))
   cov_cutoffs_list <- list()
