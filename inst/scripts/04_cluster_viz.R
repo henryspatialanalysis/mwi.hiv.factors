@@ -249,7 +249,14 @@ district_plot_dir <- file.path(viz_dir, 'district_maps_by_profile')
 dir.create(district_plot_dir, showWarnings = FALSE, recursive = TRUE)
 catchments_sf_merged$cluster_name <- catchments_sf_merged$cluster
 
-for(this_district in unique(catchments_sf_merged$district)){
+plot_districts <- unique(catchments_sf_merged$district)
+subset_districts <- config$get("subset_districts", fail_if_null = FALSE) |>
+  setdiff(NA)
+if(length(subset_districts) > 0){
+  plot_districts <- intersect(plot_districts, subset_districts)
+}
+
+for(this_district in plot_districts){
   msg <- glue::glue("Creating district-level maps for {this_district}")
   message(msg)
   tictoc::tic(msg)
