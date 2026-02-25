@@ -6,12 +6,12 @@ subset_districts: ['Lilongwe', 'Mulanje'] # Add other districts to subset by
 use_pca_for_clustering: true
 versions:
   census: '20240905-072347-cce9be26'
-  community_workshops: '2026-02-20-workshop-test'
+  community_workshops: '2026-02-26'
   h3_setup: '20250509-230920-52b814f3'
   catchments: '20251027-191319-9cfa4656'
   splitting: '20251027-204900-49d78ac7'
-  prepared_data: '2026-02-20-test'
-  analysis: '2026-02-20-test'
+  prepared_data: '2026-02-26'
+  analysis: '2026-02-26'
 covariates:
   population_1km: "Population density"
   # poverty: "Poverty rate"
