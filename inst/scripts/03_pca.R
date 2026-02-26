@@ -118,6 +118,8 @@ if(length(split_cols) > 0L){
 
 if(!is.null(config$get("subset_districts", fail_if_null = FALSE))){
   for(grp in names(pca_list)){
+    pca_list[[grp]]$catchments <- pca_list[[grp]]$catchments |>
+      dplyr::filter(district %in% config$get("subset_districts"))
     pca_list[[grp]]$districts <- pca_list[[grp]]$districts |>
       dplyr::filter(area_name %in% config$get("subset_districts"))
     pca_list[[grp]]$districts$district <- pca_list[[grp]]$districts$area_name
