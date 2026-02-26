@@ -128,7 +128,8 @@ cov_data_long <- data.table::copy(cov_data_merged) |>
     variable.name = 'variable',
     value.name = 'value'
   ) |>
-  _[var_labels, on = 'variable', var_label := i.var_label]
+  _[var_labels, on = 'variable', var_label := i.var_label] |>
+  suppressWarnings()
 
 # Get overall and cluster level means, to be plotted as vertical lines
 overall_means <- cov_data_long[
@@ -179,9 +180,17 @@ ggplot2::ggsave(
 
 ## Create maps of all clusters nationwide ----------------------------------------------->
 
-districts_with_catchments <- districts_sf[
-  districts_sf$area_name %in% unique(catchments_sf_merged$district),
-]
+# Subset to viz districts
+plot_districts <- unique(catchments_sf_merged$district)
+subset_districts <- config$get("subset_districts", fail_if_null = FALSE) |>
+  setdiff(NA)
+if(length(subset_districts) > 0){
+  plot_districts <- intersect(plot_districts, subset_districts)
+}
+catchments_sf_merged <- catchments_sf_merged |>
+  dplyr::filter(district %in% plot_districts)
+
+districts_with_catchments <- districts_sf[districts_sf$area_name %in% plot_districts, ]
 catchments_bbox <- sf::st_bbox(districts_with_catchments)
 
 # Create a map of all clusters nationwide
@@ -225,14 +234,16 @@ ggplot2::ggsave(
 
 ## Create zoomed in maps for each district ---------------------------------------------->
 
-for(d_name in districts_with_catchments$area_name){
+for(d_name in plot_districts){
   d_zoom <- districts_with_catchments[districts_with_catchments$area_name == d_name, ] |>
     sf::st_bbox()
-  district_map <- national_map +
+  district_map <- suppressMessages(
+    national_map +
     ggplot2::coord_sf(
       xlim = c(d_zoom['xmin'], d_zoom['xmax']),
       ylim = c(d_zoom['ymin'], d_zoom['ymax'])
     )
+  )
   ggplot2::ggsave(
     filename = glue::glue("{viz_dir}/profiles_map_{d_name}.png"),
     plot = district_map,
@@ -248,13 +259,6 @@ for(d_name in districts_with_catchments$area_name){
 district_plot_dir <- file.path(viz_dir, 'district_maps_by_profile')
 dir.create(district_plot_dir, showWarnings = FALSE, recursive = TRUE)
 catchments_sf_merged$cluster_name <- catchments_sf_merged$cluster
-
-plot_districts <- unique(catchments_sf_merged$district)
-subset_districts <- config$get("subset_districts", fail_if_null = FALSE) |>
-  setdiff(NA)
-if(length(subset_districts) > 0){
-  plot_districts <- intersect(plot_districts, subset_districts)
-}
 
 for(this_district in plot_districts){
   msg <- glue::glue("Creating district-level maps for {this_district}")
