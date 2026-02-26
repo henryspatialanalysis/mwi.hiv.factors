@@ -74,8 +74,8 @@ covariate_cluster_summaries <- lapply(group_names, function(group_name){
     _[
       variable %in% c('mobility', 'econ_activity', 'pop_growth', 'weather'),
       `:=` (
-        q1 = mean_cluster,
-        q5 = 1 - mean_cluster
+        q1 = 1 - mean_cluster,
+        q5 = mean_cluster
       )] |>
     _[, .(
       pca_group = group_name,
@@ -96,10 +96,15 @@ data.table::fwrite(
 ## Set colors for each cluster ---------------------------------------------------------->
 
 possible_colors <- c(
-  RColorBrewer::brewer.pal(n = 8, name = 'Set2'),
-  RColorBrewer::brewer.pal(n = 8, name = 'Dark2'),
-  RColorBrewer::brewer.pal(n = 8, name = 'Set1')
+  "#fb9a99", "#5ac445", "#8b5db1", "#1d7417", "#e6ab02", "#386cb0",
+  "#bb4e0f"
 )
+
+# possible_colors <- c(
+#   RColorBrewer::brewer.pal(n = 8, name = 'Set2'),
+#   RColorBrewer::brewer.pal(n = 8, name = 'Dark2'),
+#   RColorBrewer::brewer.pal(n = 8, name = 'Set1')
+# )
 
 all_cluster_names <- lapply(
   group_names,
