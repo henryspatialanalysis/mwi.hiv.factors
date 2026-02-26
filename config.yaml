@@ -2,7 +2,7 @@ catchments_id_field: 'catchment_id'
 top_catchments_cutoff: 0.01
 pca_level: 'facility'
 split_pca_by: ['setting'] # Can also add 'southern' to split by region
-subset_districts: ['Lilongwe', 'Mulanje'] # Add other districts to subset by
+subset_districts: ['Chikwawa', 'Dowa', 'Karonga', 'Kasungu', 'Lilongwe', 'Mulanje', 'Nsanje']
 use_pca_for_clustering: true
 versions:
   census: '20240905-072347-cce9be26'
@@ -221,8 +221,8 @@ drop_from_metro: [
   'distance_admarc'
 ]
 cluster_counts:
-  "Metro": 3
-  "Non-metro": 5
+  "Metro": 2
+  "Non-metro": 3
 iit_facilities: [
   'Chikwawa District Hospital',
   'Mponela Rural Hospital',
