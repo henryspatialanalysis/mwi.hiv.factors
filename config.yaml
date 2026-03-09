@@ -214,6 +214,8 @@ directories:
       cluster_colors: 'cluster_colors.csv'
       gvh_covariate_viz: 'gvh_covariate_viz.pdf'
       gvh_regressions_by_archetype: 'gvh_regressions_by_archetype.csv'
+      vetted_profile_groupings: 'vetted_profile_groupings.csv'
+      within_profile_variation: 'within_profile_variation.csv'
 drop_from_metro: [
   'distance_border_posts',
   'distance_towns',
