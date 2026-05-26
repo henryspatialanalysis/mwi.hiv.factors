@@ -12,6 +12,11 @@ versions:
   splitting: '20251027-204900-49d78ac7'
   prepared_data: '2026-02-26'
   analysis: '2026-02-26-no-cvs'
+  dhamis_obs: '20260216-215744-9007e94d'
+  facility_stats_output: '2026-05-26'
+# Most recent year/quarter of the DHAMIS ART cohort to report as 'ART Cohort size'
+art_cohort_year: 2025
+art_cohort_quarter: 4
 covariates:
   population_1km: "Population density"
   # poverty: "Poverty rate"
@@ -90,6 +95,7 @@ directories:
     path: '~/repos/mwi.hiv.factors'
     files:
       config: 'config.yaml'
+      facility_stats_crosswalk: 'inst/scripts/facility_stats/facility_name_crosswalk.csv'
   global_shp:
     versioned: FALSE
     path: '/mnt/c//Users/Lenovo/OneDrive - Henry Spatial Analysis LLC/Clients/DHS/Sharing/Updated GAUL shapefile'
@@ -219,6 +225,21 @@ directories:
       gvh_regressions_by_archetype: 'gvh_regressions_by_archetype.csv'
       vetted_profile_groupings: 'vetted_profile_groupings.csv'
       within_profile_variation: 'within_profile_variation.csv'
+  facility_surveys:
+    versioned: FALSE
+    path: '/mnt/c/Users/nathe/Dropbox/RESPOND_Community Archetyping/Datasets/facility_surveys'
+    files:
+      facility_stats_template: 'RESPOND_Profiling_Facility Stats Table_20May26.xlsx'
+  facility_stats_output:
+    versioned: TRUE
+    path: '/mnt/c/Users/nathe/Dropbox/RESPOND_Community Archetyping/Facility Statistics'
+    files:
+      facility_stats_filled: 'RESPOND_Profiling_Facility Stats Table_20May26.xlsx'
+  dhamis_obs:
+    versioned: TRUE
+    path: '~/repos/respond-map-prep/archive/mwi_raw_dhamis-obs'
+    files:
+      dhamis_cumulative_art: 'artefacts/dhamis_cumulative_art.csv.gz'
 drop_from_metro: [
   'distance_border_posts',
   'distance_towns',
