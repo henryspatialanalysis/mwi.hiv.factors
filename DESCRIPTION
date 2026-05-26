@@ -21,6 +21,7 @@ Imports:
     terra,
     viridisLite
 Suggests:
+    openxlsx2,
     versioning
 License: MIT + file LICENSE
 Encoding: UTF-8
