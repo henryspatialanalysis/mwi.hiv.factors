@@ -17,6 +17,20 @@ versions:
 # Most recent year/quarter of the DHAMIS ART cohort to report as 'ART Cohort size'
 art_cohort_year: 2025
 art_cohort_quarter: 4
+# M&E facility-indicator data added to the "Facility stats" tab. Indicators are in rows
+# (label in column A), facilities across columns (names in me_data_facility_name_row).
+# Rate indicators are detected automatically by a "%" in the indicator label.
+me_data_sheet: '2025'
+me_data_facility_name_row: 6
+me_data_indicator_rows: [8, 13, 14, 15, 26, 27]
+# "Facility Assessment" tab: indicator codes are parsed from the bracketed [code] in each
+# row-5 header and matched to same-named variables in the Main facility-assessment file.
+facility_assessment_sheet: 'Facility Assessment'
+# "Facility Quality Tables" template: two tabs summarising the Client Exit Survey
+# (client-level) aggregated to facilities. Aggregation rules per the template's
+# "Data dictionary" tab are encoded in 01_facility_quality.R.
+facility_quality_main_sheet: 'Client exit survey — main'
+facility_quality_service_sheet: 'Service receipt'
 covariates:
   population_1km: "Population density"
   # poverty: "Poverty rate"
@@ -230,11 +244,21 @@ directories:
     path: '/mnt/c/Users/nathe/Dropbox/RESPOND_Community Archetyping/Datasets/facility_surveys'
     files:
       facility_stats_template: 'RESPOND_Profiling_Facility Stats Table_20May26.xlsx'
+      facility_quality_template: 'RESPOND_Profiling_Facility Quality Tables_20May26.xlsx'
+      facility_assessment_main: 'RESPOND_FacilityAssessment_Main_clean.dta'
+      facility_assessment_commpartners: 'RESPOND_FacilityAssessment_CommPartners_clean.dta'
+      client_exit_survey: 'RESPOND Client Exist Survey_26May2026.dta'
+  me_data:
+    versioned: FALSE
+    path: '/mnt/c/Users/nathe/Dropbox/RESPOND_Community Archetyping/Datasets/M&E Data'
+    files:
+      facility_indicators: 'RESPOND_Profiling_Facility Indicators_22May26_FMN.xlsx'
   facility_stats_output:
     versioned: TRUE
     path: '/mnt/c/Users/nathe/Dropbox/RESPOND_Community Archetyping/Facility Statistics'
     files:
       facility_stats_filled: 'RESPOND_Profiling_Facility Stats Table_20May26.xlsx'
+      facility_quality_filled: 'RESPOND_Profiling_Facility Quality Tables_20May26.xlsx'
   dhamis_obs:
     versioned: TRUE
     path: '~/repos/respond-map-prep/archive/mwi_raw_dhamis-obs'

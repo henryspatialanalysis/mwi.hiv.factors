@@ -22,6 +22,7 @@ Imports:
     viridisLite
 Suggests:
     openxlsx2,
+    readstata13,
     versioning
 License: MIT + file LICENSE
 Encoding: UTF-8
