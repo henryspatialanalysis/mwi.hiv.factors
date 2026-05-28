@@ -112,6 +112,41 @@ results <- lapply(stages, function(spec){
   )
 }) |> data.table::rbindlist()
 
+## BASELINE: random assignment into k clusters ------------------------------------------>
+## Using the 2026-02-26 PC space, randomly assign the facilities into BASELINE_K groups
+## N_BASELINE_DRAWS times and average the resulting scores.
+
+set.seed(2026L)
+N_BASELINE_DRAWS <- 100L
+BASELINE_STAGE <- '2026-02-26'
+BASELINE_K <- 5L
+
+baseline_pcs <- file.path(ANALYSIS_DIR, BASELINE_STAGE, 'Non-metro', 'pca_kmeans_results.csv') |>
+  data.table::fread() |>
+  _[, ..PC_COLS] |>
+  as.matrix()
+
+baseline_draws <- lapply(seq_len(N_BASELINE_DRAWS), function(i){
+  labels <- sample(seq_len(BASELINE_K), size = nrow(baseline_pcs), replace = TRUE)
+  scores <- score_clustering(baseline_pcs, labels)
+  data.table::data.table(
+    mean_silhouette = scores$mean_silhouette, wss = scores$wss, bss = scores$bss
+  )
+}) |> data.table::rbindlist()
+
+baseline_row <- data.table::data.table(
+  stage = 'baseline',
+  description = 'Random facility assignment into 5 clusters',
+  cluster_source = 'random',
+  n_facilities = nrow(baseline_pcs),
+  k_selected = BASELINE_K,
+  mean_silhouette = round(mean(baseline_draws$mean_silhouette), 4),
+  wss = round(mean(baseline_draws$wss), 3),
+  bss = round(mean(baseline_draws$bss), 3)
+)
+
+results <- data.table::rbindlist(list(results, baseline_row))
+
 print(results)
 
 ## SAVE ---------------------------------------------------------------------------------->
