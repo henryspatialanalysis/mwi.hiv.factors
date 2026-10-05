@@ -253,45 +253,46 @@ fig3_long[, indicator := factor(
   fig3_labels[as.character(indicator)],
   levels = fig3_labels[paper$fig3_indicators]
 )]
-# GIS-based (continuous) indicators on top, community-based (yes/no) indicators below.
-#  patchwork aligns the panel areas so the six profile columns line up across both parts.
+# GIS-based (continuous) indicators as histograms on top, community-based (yes/no)
+#  indicators as stacked bars below. patchwork aligns the panel areas so the six profile
+#  columns line up across both parts.
 fig3_community <- fig3_labels[intersect(paper$fig3_indicators, community_vars)]
+fig3_split <- list(
+  gis = fig3_long[!indicator %in% fig3_community, ],
+  community = fig3_long[indicator %in% fig3_community, ]
+) |> lapply(function(part_long) part_long[, indicator := droplevels(indicator)])
+fig3_title_theme <- ggplot2::theme(
+  plot.title = ggplot2::element_text(face = 'bold', size = 9, hjust = 0)
+)
 fig3_parts <- list(
-  gis = fig3_long[!indicator %in% fig3_community, ][, indicator := droplevels(indicator)],
-  community = fig3_long[indicator %in% fig3_community, ][
-    , indicator := droplevels(indicator)
-  ]
-) |> lapply(function(part_long){
-  mwi.hiv.factors::profile_indicator_histograms(
-    data_long = part_long,
+  gis = mwi.hiv.factors::profile_indicator_histograms(
+    data_long = fig3_split$gis,
     profile_colors = profile_colors,
     all_label = 'All profiled catchments',
     bins = 10,
     base_size = 8,
     show_all = FALSE,
     layout = 'indicators_as_rows',
-    binary_indicators = intersect(fig3_community, levels(part_long$indicator)),
     wrap_width = 16L,
     log_suffix = '(log10 scale)',
-    log_indicators = intersect(
-      fig3_labels['log_population_1km'], levels(part_long$indicator)
-    )
-  )
-})
-fig3_title_theme <- ggplot2::theme(
-  plot.title = ggplot2::element_text(face = 'bold', size = 9, hjust = 0)
-)
-fig3_parts$gis <- fig3_parts$gis +
-  ggplot2::labs(title = 'A. GIS-based indicators', x = NULL) +
-  fig3_title_theme
-fig3_parts$community <- fig3_parts$community +
-  ggplot2::labs(title = 'B. Community-based indicators') +
-  fig3_title_theme
+    log_indicators = fig3_labels['log_population_1km']
+  ) +
+    ggplot2::labs(title = 'A. GIS-based indicators'),
+  community = mwi.hiv.factors::profile_indicator_bars(
+    data_long = fig3_split$community,
+    profile_colors = profile_colors,
+    base_size = 8,
+    wrap_width = 16L
+  ) +
+    ggplot2::labs(title = 'B. Community-based indicators')
+) |> lapply(function(part) part + fig3_title_theme)
 # Row heights in proportion to the number of indicators in each part
 fig3 <- patchwork::wrap_plots(
   fig3_parts$gis, fig3_parts$community,
   ncol = 1,
-  heights = c(length(paper$fig3_indicators) - length(fig3_community), length(fig3_community))
+  heights = c(
+    length(paper$fig3_indicators) - length(fig3_community), length(fig3_community)
+  )
 )
 ggplot2::ggsave(
   filename = config$get_file_path('paper', 'fig3_profile_indicators'),

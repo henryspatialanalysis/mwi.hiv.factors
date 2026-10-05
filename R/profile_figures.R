@@ -101,6 +101,30 @@ profile_map <- function(
 }
 
 
+#' Facet labeller that wraps text, breaking long hyphenated words after a hyphen
+#'
+#' @details Works like [ggplot2::label_wrap_gen()], except that a hyphenated word longer
+#'   than `width` may also break after one of its hyphens. Shorter hyphenated words are
+#'   kept whole.
+#'
+#' @param width (`integer(1)`) Target line width in characters
+#'
+#' @return A ggplot2 labeller function
+#'
+#' @keywords internal
+wrap_labeller <- function(width){
+  wrap_one <- function(label){
+    words <- strsplit(label, ' ', fixed = TRUE)[[1]]
+    long_hyphenated <- nchar(words) > width & grepl('-', words, fixed = TRUE)
+    words[long_hyphenated] <- gsub('-', '- ', words[long_hyphenated], fixed = TRUE)
+    lines <- strwrap(paste(words, collapse = ' '), width = width)
+    # Rejoin hyphenated words that did not need to break
+    paste(gsub('- ', '-', lines, fixed = TRUE), collapse = '\n')
+  }
+  ggplot2::as_labeller(function(labels) vapply(labels, wrap_one, character(1)))
+}
+
+
 #' Faceted histograms of indicator values by community profile
 #'
 #' @details Each panel is a histogram of catchment values for one indicator in one
@@ -203,7 +227,7 @@ profile_indicator_histograms <- function(
     number_labels(x)
   }
   count_breaks <- function(lims) unique(floor(pretty(lims, n = 3)))
-  labeller <- ggplot2::label_wrap_gen(width = wrap_width)
+  labeller <- wrap_labeller(width = wrap_width)
 
   if(layout == 'profiles_as_rows'){
     fig <- ggplot2::ggplot(mapping = ggplot2::aes(x = value, fill = profile)) +
@@ -280,6 +304,102 @@ profile_indicator_histograms <- function(
       } else {
         ggplot2::element_text()
       }
+    )
+  return(fig)
+}
+
+
+#' Faceted stacked bars of yes/no indicators by community profile
+#'
+#' @details Rows are indicators and columns are profiles, matching the
+#'   `'indicators_as_rows'` layout of [profile_indicator_histograms()]. Each panel holds
+#'   one bar spanning 0 to 100%: the lower segment is the share of catchments coded 1
+#'   (filled in the profile color) and the upper segment is the share coded 0 (white,
+#'   outlined in the profile color). A dashed black line marks the share coded 1 across
+#'   all catchments. When `show_divisions` is TRUE, each segment is subdivided into one
+#'   slice per catchment, with white dividers in the lower segment and dividers in the
+#'   profile color in the upper segment.
+#'
+#' @param data_long ([data.table::data.table]) Long table with fields `profile` (factor),
+#'   `indicator` (factor, in plotting order), and `value` (numeric, coded 0/1)
+#' @param profile_colors (`character(N)`) Named colors, one per level of `profile`
+#' @param base_size (`numeric(1)`, default 8) Base font size passed to the ggplot theme
+#' @param wrap_width (`integer(1)`, default 11) Character width for wrapping strip labels
+#' @param bar_width (`numeric(1)`, default 0.5) Bar width as a share of the panel width
+#' @param y_label (`character(1)`, default '% Yes') Y axis title
+#' @param show_divisions (`logical(1)`, default TRUE) Whether to draw one slice per
+#'   catchment within each bar segment
+#' @param divider_linewidth (`numeric(1)`, default 0.15) Line width of the catchment
+#'   dividers
+#'
+#' @return A [ggplot2::ggplot] object
+#'
+#' @import ggplot2 data.table
+#' @export
+profile_indicator_bars <- function(
+  data_long, profile_colors, base_size = 8, wrap_width = 11L, bar_width = 0.5,
+  y_label = '% Yes', show_divisions = TRUE, divider_linewidth = 0.15
+){
+  counts <- data_long[
+    !is.na(value), .(n = .N, n_yes = sum(value == 1)), by = .(profile, indicator)
+  ][, pct_yes := 100 * n_yes / n]
+  overall <- data_long[, .(pct_yes = 100 * mean(value, na.rm = TRUE)), by = indicator]
+  bars <- data.table::rbindlist(list(
+    counts[, .(profile, indicator, segment = 'yes', ymin = 0, ymax = pct_yes)],
+    counts[, .(profile, indicator, segment = 'no', ymin = pct_yes, ymax = 100)]
+  ))
+  bars[, `:=` (xmin = -bar_width / 2, xmax = bar_width / 2)]
+  # One divider between each pair of adjacent catchments, except at the yes/no boundary
+  dividers <- counts[n > 1, .(k = seq_len(n - 1)), by = .(profile, indicator, n, n_yes)][
+    k != n_yes,
+  ][, `:=` (
+    y = 100 * k / n,
+    segment = data.table::fifelse(k < n_yes, 'yes', 'no'),
+    xmin = -bar_width / 2,
+    xmax = bar_width / 2
+  )]
+  if(!show_divisions) dividers <- dividers[0, ]
+  divider_aes <- ggplot2::aes(x = xmin, xend = xmax, y = y, yend = y)
+
+  fig <- ggplot2::ggplot(
+    mapping = ggplot2::aes(
+      xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, color = profile
+    )
+  ) +
+    ggplot2::facet_grid(
+      indicator ~ profile, labeller = wrap_labeller(width = wrap_width)
+    ) +
+    # Fills, then catchment dividers, then outlines so that dividers do not cut the edges
+    ggplot2::geom_rect(
+      data = bars[segment == 'yes', ], ggplot2::aes(fill = profile), color = NA
+    ) +
+    ggplot2::geom_rect(data = bars[segment == 'no', ], fill = '#FFFFFF', color = NA) +
+    ggplot2::geom_segment(
+      data = dividers[segment == 'yes', ], mapping = divider_aes, inherit.aes = FALSE,
+      color = '#FFFFFF', linewidth = divider_linewidth
+    ) +
+    ggplot2::geom_segment(
+      data = dividers[segment == 'no', ],
+      mapping = ggplot2::aes(x = xmin, xend = xmax, y = y, yend = y, color = profile),
+      inherit.aes = FALSE, linewidth = divider_linewidth
+    ) +
+    ggplot2::geom_rect(data = bars, fill = NA, linewidth = 0.3) +
+    ggplot2::geom_hline(
+      data = overall, ggplot2::aes(yintercept = pct_yes),
+      linetype = 'dashed', color = '#171717', linewidth = 0.3
+    ) +
+    ggplot2::scale_x_continuous(limits = c(-0.5, 0.5), breaks = NULL) +
+    ggplot2::scale_y_continuous(limits = c(0, 100), breaks = c(0, 50, 100)) +
+    ggplot2::scale_fill_manual(
+      values = profile_colors, aesthetics = c('fill', 'color'), guide = 'none'
+    ) +
+    ggplot2::labs(x = NULL, y = y_label) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(
+      panel.grid = ggplot2::element_blank(),
+      strip.background = ggplot2::element_rect(fill = '#F2F2F2', color = '#BBBBBB'),
+      strip.text.y = ggplot2::element_text(angle = 0, hjust = 0, size = base_size * 0.85),
+      strip.text.x = ggplot2::element_text(size = base_size * 0.85)
     )
   return(fig)
 }
