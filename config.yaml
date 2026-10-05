@@ -305,7 +305,9 @@ paper:
   stage_k:
     Metro: 3
     Non-metro: 5
-  # Final profiles in display order (urban to rural), with colors and short labels
+  # Final profiles in display order (urban to rural), with colors and short labels. Keys
+  # match `profile_color` in the vetted groupings; Brown and Grey display as orange and
+  # purple, following the May 2026 recolouring.
   profiles:
     Teal: 'Urban seasonal-mobility corridor'
     Pink: 'High-income urban'
@@ -318,8 +320,8 @@ paper:
     Pink: '#D9489A'
     Green: '#5DA02C'
     Yellow: '#E0A800'
-    Brown: '#8A4F1D'
-    Grey: '#9AA3AD'
+    Brown: '#E8590C'
+    Grey: '#8064A2'
   excluded_profiles: ['Orange']
   fig1_indicators: [
     'log_population_1km', 'rpi', 'landuse_agriculture', 'landuse_settlements',
