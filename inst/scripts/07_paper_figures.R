@@ -300,6 +300,27 @@ ggplot2::ggsave(
 )
 
 
+## TEST FIGURE: RADAR CHART OF PROFILE MEANS -------------------------------------------->
+
+# Same indicators and order as Figure 3; population density is shown on a log10 scale
+radar_long <- data.table::copy(fig3_long)
+pop_label <- fig3_labels['log_population_1km']
+radar_long[indicator == pop_label, value := log10(value)]
+levels(radar_long$indicator)[levels(radar_long$indicator) == pop_label] <- paste(
+  pop_label, '(log10 scale)'
+)
+fig_radar <- mwi.hiv.factors::profile_radar(
+  data_long = radar_long,
+  profile_colors = profile_colors,
+  binary_indicators = fig3_community,
+  order_by_similarity = TRUE
+)
+ggplot2::ggsave(
+  filename = config$get_file_path('paper', 'fig_profile_radar'),
+  plot = fig_radar, width = 6.5, height = 6.75, units = 'in', dpi = 400, bg = 'white'
+)
+
+
 ## TABLE 2 INPUTS: SUMMARIES BY PROFILE ------------------------------------------------->
 
 gis_vars <- setdiff(names(config$get('pca_covariates')), community_vars) |>

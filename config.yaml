@@ -271,6 +271,7 @@ directories:
       fig1_indicator_maps: 'fig1_indicator_maps.png'
       fig2_profile_map: 'fig2_profile_map.png'
       fig3_profile_indicators: 'fig3_profile_indicators.png'
+      fig_profile_radar: 'fig_profile_radar.png'
       table2_profile_summaries: 'table2_profile_summaries.csv'
       table3_fit_by_stage: 'table3_fit_by_stage.csv'
       descriptive_stats: 'descriptive_stats_by_setting.csv'

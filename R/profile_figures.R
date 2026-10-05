@@ -405,6 +405,180 @@ profile_indicator_bars <- function(
 }
 
 
+#' Order radar spokes so that neighbouring spokes have similar profile patterns
+#'
+#' @details Finds the circular order of indicators that minimises the sum of
+#'   (1 - correlation) between each pair of neighbouring spokes, including the pair that
+#'   closes the circle. Correlations are taken across profiles, using the scaled profile
+#'   means. The first indicator stays first. Every order is searched, so this is limited
+#'   to 10 or fewer indicators.
+#'
+#' @param means ([data.table::data.table]) Table with fields `profile`, `indicator`,
+#'   and `r` (scaled profile mean)
+#' @param indicator_levels (`character(N)`) Indicators in their current order
+#'
+#' @return `character(N)` Indicators in the new order
+#'
+#' @keywords internal
+similarity_axis_order <- function(means, indicator_levels){
+  n_axes <- length(indicator_levels)
+  if(n_axes > 10) stop('Similarity ordering searches every order; use 10 or fewer axes')
+  wide <- data.table::dcast(
+    means[, .(profile, indicator = as.character(indicator), r)],
+    profile ~ indicator, value.var = 'r'
+  )
+  dissimilarity <- 1 - suppressWarnings(stats::cor(as.matrix(wide[, ..indicator_levels])))
+  # Indicators with no variation across profiles are treated as uncorrelated
+  dissimilarity[is.na(dissimilarity)] <- 1
+  permutations <- function(v){
+    if(length(v) <= 1) return(list(v))
+    do.call(c, lapply(seq_along(v), function(i){
+      lapply(permutations(v[-i]), function(p) c(v[i], p))
+    }))
+  }
+  orders <- lapply(permutations(seq_len(n_axes)[-1]), function(p) c(1L, p))
+  costs <- vapply(
+    orders, function(o) sum(dissimilarity[cbind(o, c(o[-1], o[1]))]), numeric(1)
+  )
+  return(indicator_levels[orders[[which.min(costs)]]])
+}
+
+
+#' Radar chart of mean indicator values by community profile
+#'
+#' @details Each indicator is one spoke, starting at 12 o'clock and running clockwise
+#'   in the order of the `indicator` factor levels. Indicators listed in
+#'   `binary_indicators` are coded 0/1 and keep that scale, so their spokes read as the
+#'   share coded 1. Each other indicator is rescaled across profile means, from the
+#'   lowest profile mean (0) to the highest (1). Scaled value 0 sits on a small inner
+#'   ring of radius `inner_radius` rather than at the centre. Each profile is drawn as a
+#'   polygon joining its scaled means.
+#'
+#' @param data_long ([data.table::data.table]) Long table with fields `profile` (factor),
+#'   `indicator` (factor, in plotting order), and `value` (numeric, already on the scale
+#'   to be shown, e.g. logged)
+#' @param profile_colors (`character(N)`) Named colors, one per level of `profile`
+#' @param binary_indicators (`character(N)`, default NULL) Indicator levels coded 0/1,
+#'   which are not rescaled
+#' @param inner_radius (`numeric(1)`, default 0.1) Radius of scaled value 0, as a share
+#'   of the outer radius
+#' @param ring_breaks (`numeric(N)`, default c(0, 0.25, 0.5, 0.75, 1)) Scaled values at
+#'   which to draw reference rings
+#' @param range_labels (`character(2)`, default c('Min.', 'Max.')) Labels for scaled
+#'   values 0 and 1, drawn along the first spoke
+#' @param fill_alpha (`numeric(1)`, default 0.06) Fill opacity of the profile polygons
+#' @param base_size (`numeric(1)`, default 8) Base font size
+#' @param order_by_similarity (`logical(1)`, default FALSE) Whether to reorder the
+#'   spokes so that neighbouring spokes have similar profile patterns; see
+#'   [similarity_axis_order()]. The first indicator stays at 12 o'clock.
+#' @param wrap_width (`integer(1)`, default 16) Character width for wrapping axis labels
+#'
+#' @return A [ggplot2::ggplot] object
+#'
+#' @import ggplot2 data.table
+#' @export
+profile_radar <- function(
+  data_long, profile_colors, binary_indicators = NULL, inner_radius = 0.1,
+  ring_breaks = c(0, 0.25, 0.5, 0.75, 1), range_labels = c('Min.', 'Max.'),
+  order_by_similarity = FALSE, fill_alpha = 0.06, base_size = 8, wrap_width = 16L
+){
+  to_radius <- function(scaled_value) inner_radius + (1 - inner_radius) * scaled_value
+  indicator_levels <- levels(data_long$indicator)
+
+  # Average by profile; binary indicators keep their 0-1 scale and the others are
+  #  rescaled to their range across profile means
+  means <- data_long[
+    !is.na(value), .(mean_val = mean(value)), by = .(profile, indicator)
+  ]
+  means[, `:=` (mean_min = min(mean_val), mean_range = max(mean_val) - min(mean_val)),
+    by = indicator
+  ]
+  means[, r := data.table::fifelse(
+    indicator %in% binary_indicators, mean_val,
+    data.table::fifelse(mean_range > 0, (mean_val - mean_min) / mean_range, 0.5)
+  )]
+  if(order_by_similarity){
+    indicator_levels <- similarity_axis_order(means, indicator_levels)
+  }
+
+  n_axes <- length(indicator_levels)
+  axes <- data.table::data.table(
+    indicator = factor(indicator_levels, levels = indicator_levels),
+    axis_i = seq_len(n_axes)
+  )[, angle := pi / 2 - 2 * pi * (axis_i - 1) / n_axes]
+  means[, indicator := factor(as.character(indicator), levels = indicator_levels)]
+  means <- merge(means, axes, by = 'indicator')[order(profile, axis_i)]
+  means[, `:=` (x = to_radius(r) * cos(angle), y = to_radius(r) * sin(angle))]
+
+  # Background: reference rings, spokes, and axis labels
+  rings <- data.table::CJ(ring = ring_breaks, axis_i = seq_len(n_axes))
+  rings <- merge(rings, axes, by = 'axis_i')[order(ring, axis_i)]
+  rings[, `:=` (x = to_radius(ring) * cos(angle), y = to_radius(ring) * sin(angle))]
+  label_r <- 1.08
+  axes[, `:=` (
+    x_start = inner_radius * cos(angle),
+    y_start = inner_radius * sin(angle),
+    x_end = cos(angle),
+    y_end = sin(angle),
+    x_label = label_r * cos(angle),
+    y_label = label_r * sin(angle),
+    hjust = data.table::fifelse(abs(cos(angle)) < 0.1, 0.5, (1 - sign(cos(angle))) / 2),
+    vjust = data.table::fifelse(abs(sin(angle)) < 0.1, 0.5, (1 - sign(sin(angle))) / 2),
+    label = wrap_labeller(width = wrap_width)(list(indicator = indicator_levels))[[1]]
+  )]
+  ring_labels <- data.table::data.table(ring = c(0, 1), label = range_labels)
+
+  fig <- ggplot2::ggplot() +
+    # Faint profile fills first, so that grid lines and profile outlines sit on top
+    ggplot2::geom_polygon(
+      data = means, ggplot2::aes(x = x, y = y, group = profile, fill = profile),
+      alpha = fill_alpha, color = NA, show.legend = FALSE
+    ) +
+    ggplot2::geom_polygon(
+      data = rings, ggplot2::aes(x = x, y = y, group = ring),
+      fill = NA, color = '#D9D9D9', linewidth = 0.3
+    ) +
+    ggplot2::geom_segment(
+      data = axes, ggplot2::aes(x = x_start, y = y_start, xend = x_end, yend = y_end),
+      color = '#D9D9D9', linewidth = 0.3
+    ) +
+    ggplot2::geom_text(
+      data = ring_labels, ggplot2::aes(x = 0.015, y = to_radius(ring), label = label),
+      hjust = 0, vjust = -0.3, size = base_size * 0.7 / ggplot2::.pt, color = '#8C8C8C'
+    ) +
+    ggplot2::geom_polygon(
+      data = means,
+      ggplot2::aes(x = x, y = y, group = profile, color = profile),
+      fill = NA, linewidth = 0.5, key_glyph = 'path'
+    ) +
+    ggplot2::geom_point(
+      data = means, ggplot2::aes(x = x, y = y, color = profile), size = 1.1,
+      show.legend = FALSE
+    ) +
+    ggplot2::geom_text(
+      data = axes,
+      ggplot2::aes(x = x_label, y = y_label, label = label, hjust = hjust, vjust = vjust),
+      size = base_size * 0.9 / ggplot2::.pt, lineheight = 0.9, color = '#171717'
+    ) +
+    ggplot2::scale_color_manual(
+      values = profile_colors, name = NULL, guide = ggplot2::guide_legend(ncol = 2)
+    ) +
+    ggplot2::scale_fill_manual(values = profile_colors, guide = 'none') +
+    # Leave room inside the panel for the spoke labels
+    ggplot2::expand_limits(x = c(-1.6, 1.6), y = c(-1.38, 1.38)) +
+    ggplot2::coord_equal(clip = 'off') +
+    ggplot2::theme_void(base_size = base_size) +
+    ggplot2::theme(
+      legend.position = 'bottom',
+      legend.key.height = grid::unit(base_size * 1.2, 'pt'),
+      legend.key.spacing.y = grid::unit(base_size * 0.25, 'pt'),
+      plot.margin = ggplot2::margin(5, 5, 5, 5),
+      plot.background = ggplot2::element_rect(fill = '#FFFFFF', color = NA)
+    )
+  return(fig)
+}
+
+
 #' Score a clustering in principal component space
 #'
 #' @details Computes the total, within-cluster, and between-cluster sums of squares and
