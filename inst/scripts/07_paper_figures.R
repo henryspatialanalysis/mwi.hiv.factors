@@ -22,7 +22,7 @@ REPO_DIR <- '~/repos/mwi.hiv.factors'
 
 ## SETUP -------------------------------------------------------------------------------->
 
-load_pkgs <- c('data.table', 'ggplot2', 'sf', 'patchwork', 'viridisLite', 'versioning')
+load_pkgs <- c('data.table', 'ggplot2', 'sf', 'patchwork', 'RColorBrewer', 'versioning')
 lapply(load_pkgs, library, character.only = TRUE) |> invisible()
 devtools::load_all(REPO_DIR)
 
@@ -85,6 +85,12 @@ national_sf <- catchments_sf |>
   dplyr::select(catchment_id) |>
   merge(y = national_covs, by = 'catchment_id')
 
+# Sequential palette per indicator, dropping the two lightest steps so that low values
+#  stay visible against the white study districts
+fig1_colors <- function(cov_name){
+  brewer_steps <- RColorBrewer::brewer.pal(n = 9, name = paper$fig1_palettes[[cov_name]])
+  grDevices::colorRampPalette(brewer_steps[3:9])(100)
+}
 fig1_panels <- lapply(paper$fig1_indicators, function(cov_name){
   national_sf$THIS_COV <- national_sf[[cov_name]]
   is_density <- cov_name == 'log_population_1km'
@@ -92,7 +98,7 @@ fig1_panels <- lapply(paper$fig1_indicators, function(cov_name){
   mwi.hiv.factors::create_covariate_map(
     catchments_with_covs = national_sf,
     district_bounds = districts_sf,
-    outcome_colors = viridisLite::viridis(n = 100, direction = -1),
+    outcome_colors = fig1_colors(cov_name),
     col_lims = col_lims,
     log_scale = is_density,
     cov_label = reporting_labels[cov_name]
@@ -119,7 +125,7 @@ if(length(density_idx) == 1){
   fig1_panels[[density_idx]] <- suppressMessages(
     fig1_panels[[density_idx]] +
       ggplot2::scale_fill_gradientn(
-        colors = viridisLite::viridis(n = 100, direction = -1),
+        colors = fig1_colors('log_population_1km'),
         limits = c(100, 10000),
         breaks = c(100, 300, 1000, 3000, 10000),
         labels = scales::comma,

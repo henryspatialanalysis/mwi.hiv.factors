@@ -328,6 +328,15 @@ paper:
     'log_population_1km', 'rpi', 'landuse_agriculture', 'landuse_settlements',
     'distance_towns', 'distance_borders'
   ]
+  # RColorBrewer sequential palette for each Figure 1 indicator; no reds or greens, which
+  #  can read as value judgments
+  fig1_palettes:
+    log_population_1km: 'Purples'
+    rpi: 'Oranges'
+    landuse_agriculture: 'YlOrBr'
+    landuse_settlements: 'BuPu'
+    distance_towns: 'Blues'
+    distance_borders: 'PuBu'
   fig3_indicators: [
     'log_population_1km', 'rpi', 'landuse_agriculture', 'distance_towns',
     'distance_borders', 'mobility', 'econ_activity', 'pop_growth', 'weather'
