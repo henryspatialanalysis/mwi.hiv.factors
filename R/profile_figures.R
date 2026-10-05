@@ -1,0 +1,328 @@
+#' Map facility catchments by community profile
+#'
+#' @details Categorical map of catchment polygons filled by profile, drawn over a
+#'   district basemap. Districts outside `focus_districts` are shaded grey. Each
+#'   profiled catchment can carry a short text label (for example, a profile number) so
+#'   that profile identity does not rely on color alone.
+#'
+#' @param catchments_sf ([sf::sf]) Catchment polygons with a factor field `profile`
+#' @param districts_sf ([sf::sf]) District polygons with the field `area_name`
+#' @param profile_colors (`character(N)`) Named fill colors, one per level of `profile`
+#' @param focus_districts (`character(N)`, default NULL) Districts drawn in white; all
+#'   other districts are shaded grey. If NULL, all districts are drawn in white.
+#' @param bbox (`numeric(4)`, default NULL) Optional map extent as
+#'   `c(xmin, ymin, xmax, ymax)`. If NULL, the extent of `districts_sf` is used.
+#' @param label_field (`character(1)`, default NULL) Optional field in `catchments_sf`
+#'   used to label each catchment at a point on its surface
+#' @param excluded_sf ([sf::sf], default NULL) Optional catchments drawn with a white
+#'   fill and dashed outline, for units that were profiled but set aside
+#' @param title (`character(1)`, default NULL) Optional panel title
+#' @param label_size (`numeric(1)`, default 2.5) Text size for catchment labels
+#' @param show_legend (`logical(1)`, default TRUE) Whether to show the fill legend
+#'
+#' @return A [ggplot2::ggplot] object
+#'
+#' @import ggplot2
+#' @importFrom sf st_bbox st_point_on_surface st_coordinates
+#' @importFrom ggrepel geom_text_repel
+#' @export
+profile_map <- function(
+  catchments_sf, districts_sf, profile_colors, focus_districts = NULL, bbox = NULL,
+  label_field = NULL, excluded_sf = NULL, title = NULL, label_size = 2.5,
+  show_legend = TRUE
+){
+  if(is.null(focus_districts)) focus_districts <- districts_sf$area_name
+  focus_sf <- districts_sf[districts_sf$area_name %in% focus_districts, ]
+  if(is.null(bbox)) bbox <- sf::st_bbox(districts_sf)
+
+  map_fig <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      data = districts_sf, fill = '#E6E6E6', color = '#FFFFFF', linewidth = 0.3
+    ) +
+    ggplot2::geom_sf(data = focus_sf, fill = '#FFFFFF', color = NA) +
+    ggplot2::geom_sf(
+      data = catchments_sf,
+      mapping = ggplot2::aes(fill = profile),
+      color = '#FFFFFF',
+      linewidth = 0.15
+    )
+  if(!is.null(excluded_sf)){
+    map_fig <- map_fig +
+      ggplot2::geom_sf(
+        data = excluded_sf, fill = '#FFFFFF', color = '#222222', linewidth = 0.3,
+        linetype = 'dashed'
+      )
+  }
+  map_fig <- map_fig +
+    ggplot2::geom_sf(data = focus_sf, fill = NA, color = '#222222', linewidth = 0.4) +
+    ggplot2::scale_fill_manual(
+      values = profile_colors,
+      drop = FALSE,
+      guide = if(show_legend) 'legend' else 'none'
+    )
+  if(!is.null(label_field)){
+    label_points <- suppressWarnings(sf::st_point_on_surface(catchments_sf))
+    label_dt <- data.table::data.table(
+      sf::st_coordinates(label_points),
+      label = catchments_sf[[label_field]]
+    )
+    # Label only catchments inside the map extent
+    label_dt <- label_dt[X >= bbox[1] & X <= bbox[3] & Y >= bbox[2] & Y <= bbox[4], ]
+    map_fig <- map_fig +
+      ggrepel::geom_text_repel(
+        data = label_dt,
+        mapping = ggplot2::aes(x = X, y = Y, label = label),
+        size = label_size,
+        color = '#171717',
+        fontface = 'bold',
+        bg.color = '#FFFFFF',
+        bg.r = 0.12,
+        min.segment.length = 0.2,
+        segment.size = 0.25,
+        box.padding = 0.12,
+        point.padding = 0,
+        max.overlaps = Inf,
+        seed = 1L
+      )
+  }
+  map_fig <- map_fig +
+    ggplot2::coord_sf(
+      xlim = bbox[c(1, 3)],
+      ylim = bbox[c(2, 4)],
+      expand = FALSE
+    ) +
+    ggplot2::labs(title = title, fill = 'Profile') +
+    ggplot2::theme_void() +
+    ggplot2::theme(
+      panel.background = ggplot2::element_rect(fill = '#F7F7F7', color = '#444444'),
+      plot.title = ggplot2::element_text(size = 10, face = 'bold', hjust = 0.02)
+    )
+  return(map_fig)
+}
+
+
+#' Faceted histograms of indicator values by community profile
+#'
+#' @details Each panel is a histogram of catchment values for one indicator in one
+#'   profile. The dashed black line marks the mean across all catchments and the dashed
+#'   colored line marks the profile mean. Two layouts are available:
+#'   - `'profiles_as_rows'`: rows are profiles (plus an optional pooled row at the top)
+#'     and columns are indicators; bars are vertical. Adapted from the cluster histograms
+#'     in `04_cluster_viz.R`.
+#'   - `'indicators_as_rows'`: rows are indicators and columns are profiles; bars are
+#'     horizontal, so the indicator value runs up the vertical axis and each row shares
+#'     one value scale across profiles.
+#'
+#' @param data_long ([data.table::data.table]) Long table with fields `profile` (factor),
+#'   `indicator` (factor, in plotting order), and `value` (numeric)
+#' @param profile_colors (`character(N)`) Named colors, one per level of `profile`
+#' @param all_label (`character(1)`, default 'All') Label for the pooled group
+#' @param all_color (`character(1)`, default '#6E6E6E') Color for the pooled group
+#' @param bins (`integer(1)`, default 12) Number of histogram bins per panel
+#' @param log_indicators (`character(N)`, default NULL) Indicator levels whose values
+#'   should be shown on a log10 scale
+#' @param base_size (`numeric(1)`, default 8) Base font size passed to the ggplot theme
+#' @param log_suffix (`character(1)`, default '(log10)') Text appended to the labels of
+#'   log-scaled indicators
+#' @param show_all (`logical(1)`, default TRUE) Whether to add the pooled group as its
+#'   own row (or column)
+#' @param layout (`character(1)`, default 'profiles_as_rows') One of
+#'   `'profiles_as_rows'` or `'indicators_as_rows'`
+#' @param wrap_width (`integer(1)`, default 11) Character width for wrapping strip labels
+#' @param binary_indicators (`character(N)`, default NULL) Indicator levels coded 0/1.
+#'   These are drawn as two bars centred on axis labels given by `binary_labels`, and
+#'   their mean lines show the share coded 1.
+#' @param binary_labels (`character(2)`, default c('No', 'Yes')) Axis labels for 0 and 1
+#'
+#' @return A [ggplot2::ggplot] object
+#'
+#' @import ggplot2 data.table
+#' @importFrom scales comma
+#' @export
+profile_indicator_histograms <- function(
+  data_long, profile_colors, all_label = 'All', all_color = '#6E6E6E', bins = 12,
+  log_indicators = NULL, base_size = 8, log_suffix = '(log10)', show_all = TRUE,
+  layout = c('profiles_as_rows', 'indicators_as_rows'), wrap_width = 11L,
+  binary_indicators = NULL, binary_labels = c('No', 'Yes')
+){
+  layout <- match.arg(layout)
+  plot_data <- data.table::rbindlist(list(
+    data.table::copy(data_long)[, profile := all_label],
+    data.table::copy(data_long)[, profile := as.character(profile)]
+  ))
+  profile_levels <- c(all_label, levels(data_long$profile))
+  plot_data[, profile := factor(profile, levels = profile_levels)]
+  if(length(log_indicators) > 0){
+    plot_data[indicator %in% log_indicators, value := log10(value)]
+    levels(plot_data$indicator) <- ifelse(
+      levels(plot_data$indicator) %in% log_indicators,
+      paste(levels(plot_data$indicator), log_suffix),
+      levels(plot_data$indicator)
+    )
+  }
+  overall_means <- plot_data[
+    profile == all_label, .(mean_val = mean(value, na.rm = TRUE)), by = indicator
+  ]
+  profile_means <- plot_data[
+    profile != all_label,
+    .(mean_val = mean(value, na.rm = TRUE)),
+    by = .(profile, indicator)
+  ]
+  all_colors <- c(profile_colors, stats::setNames(all_color, all_label))
+  # The pooled mean stays as the black reference line even when the pooled group is hidden
+  if(!show_all){
+    plot_data <- plot_data[profile != all_label, ]
+    plot_data[, profile := droplevels(profile)]
+  }
+
+  # Yes/no indicators are drawn as bars centred on 0 and 1; everything else as histograms
+  is_binary <- plot_data$indicator %in% binary_indicators
+  binary_counts <- plot_data[is_binary, .(n = .N), by = .(profile, indicator, value)]
+  continuous_data <- plot_data[!is_binary, ]
+  # Keep both the 0 and 1 positions in every yes/no panel, even when one is empty
+  binary_frame <- data.table::CJ(
+    indicator = factor(binary_indicators, levels = levels(plot_data$indicator)),
+    value = c(0, 1)
+  )
+
+  # Axis for indicator values: yes/no panels get labelled 0 and 1; panels spanning
+  #  0 to 100 (percentages) get three ticks
+  value_breaks <- function(lims){
+    if(lims[1] > -0.6 && lims[2] < 1.6) return(c(0, 1))
+    if(lims[1] <= 0 && lims[2] >= 100) return(c(0, 50, 100))
+    scales::breaks_pretty(n = 3)(lims)
+  }
+  number_labels <- scales::label_number(accuracy = NULL, big.mark = ',')
+  value_labels <- function(x){
+    x_present <- x[!is.na(x)]
+    if(length(binary_indicators) > 0 && identical(as.numeric(x_present), c(0, 1))){
+      out <- x
+      out[!is.na(x)] <- binary_labels
+      return(out)
+    }
+    number_labels(x)
+  }
+  count_breaks <- function(lims) unique(floor(pretty(lims, n = 3)))
+  labeller <- ggplot2::label_wrap_gen(width = wrap_width)
+
+  if(layout == 'profiles_as_rows'){
+    fig <- ggplot2::ggplot(mapping = ggplot2::aes(x = value, fill = profile)) +
+      ggplot2::facet_grid(profile ~ indicator, scales = 'free', labeller = labeller) +
+      ggplot2::geom_histogram(
+        data = continuous_data, bins = bins, color = '#FFFFFF', linewidth = 0.2
+      ) +
+      ggplot2::geom_col(
+        data = binary_counts, ggplot2::aes(y = n), width = 0.4, color = '#FFFFFF',
+        linewidth = 0.2
+      ) +
+      ggplot2::geom_blank(
+        data = binary_frame, ggplot2::aes(x = value), inherit.aes = FALSE
+      ) +
+      ggplot2::geom_vline(
+        data = overall_means, ggplot2::aes(xintercept = mean_val),
+        linetype = 'dashed', color = '#171717', linewidth = 0.3
+      ) +
+      ggplot2::geom_vline(
+        data = profile_means, ggplot2::aes(xintercept = mean_val, color = profile),
+        linetype = 'dashed', linewidth = 0.4
+      ) +
+      ggplot2::scale_y_continuous(breaks = count_breaks) +
+      ggplot2::scale_x_continuous(breaks = value_breaks, labels = value_labels) +
+      ggplot2::labs(x = NULL, y = 'Number of catchments')
+  } else {
+    fig <- ggplot2::ggplot(mapping = ggplot2::aes(y = value, fill = profile)) +
+      ggplot2::facet_grid(indicator ~ profile, scales = 'free', labeller = labeller) +
+      ggplot2::geom_histogram(
+        data = continuous_data, bins = bins, color = '#FFFFFF', linewidth = 0.2,
+        orientation = 'y'
+      ) +
+      ggplot2::geom_col(
+        data = binary_counts, ggplot2::aes(x = n), width = 0.4, color = '#FFFFFF',
+        linewidth = 0.2, orientation = 'y'
+      ) +
+      ggplot2::geom_blank(
+        data = binary_frame, ggplot2::aes(y = value), inherit.aes = FALSE
+      ) +
+      ggplot2::geom_hline(
+        data = overall_means, ggplot2::aes(yintercept = mean_val),
+        linetype = 'dashed', color = '#171717', linewidth = 0.3
+      ) +
+      ggplot2::geom_hline(
+        data = profile_means, ggplot2::aes(yintercept = mean_val, color = profile),
+        linetype = 'dashed', linewidth = 0.4
+      ) +
+      ggplot2::scale_x_continuous(breaks = count_breaks) +
+      ggplot2::scale_y_continuous(breaks = value_breaks, labels = value_labels) +
+      ggplot2::labs(x = 'Number of catchments', y = NULL)
+  }
+  fig <- fig +
+    ggplot2::scale_fill_manual(
+      values = all_colors, aesthetics = c('fill', 'color'), guide = 'none'
+    ) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major.x = if(layout == 'profiles_as_rows'){
+        ggplot2::element_blank()
+      } else {
+        ggplot2::element_line(color = '#EBEBEB')
+      },
+      panel.grid.major.y = if(layout == 'indicators_as_rows'){
+        ggplot2::element_blank()
+      } else {
+        ggplot2::element_line(color = '#EBEBEB')
+      },
+      strip.background = ggplot2::element_rect(fill = '#F2F2F2', color = '#BBBBBB'),
+      strip.text.y = ggplot2::element_text(angle = 0, hjust = 0, size = base_size * 0.85),
+      strip.text.x = ggplot2::element_text(size = base_size * 0.85),
+      axis.text.x = if(layout == 'profiles_as_rows'){
+        ggplot2::element_text(angle = 45, hjust = 1)
+      } else {
+        ggplot2::element_text()
+      }
+    )
+  return(fig)
+}
+
+
+#' Score a clustering in principal component space
+#'
+#' @details Computes the total, within-cluster, and between-cluster sums of squares and
+#'   the mean silhouette width for a set of cluster labels, using Euclidean distance in
+#'   the space of the supplied principal component scores. Rows with missing scores or
+#'   labels are dropped.
+#'
+#' @param pc_matrix (`matrix`) Principal component scores, one row per catchment
+#' @param labels (`vector`) Cluster labels, one per row of `pc_matrix`
+#'
+#' @return Named list with `n_units`, `k`, `tss`, `wss`, `bss`, `pct_explained`
+#'   (BSS / TSS), and `mean_silhouette`
+#'
+#' @importFrom cluster silhouette
+#' @importFrom stats complete.cases dist
+#' @export
+score_clustering <- function(pc_matrix, labels){
+  keep <- stats::complete.cases(pc_matrix) & !is.na(labels)
+  pc_matrix <- pc_matrix[keep, , drop = FALSE]
+  cluster_int <- as.integer(as.factor(labels[keep]))
+
+  global_center <- colMeans(pc_matrix)
+  tss <- sum(sweep(pc_matrix, 2, global_center)^2)
+  wss <- split(as.data.frame(pc_matrix), cluster_int) |>
+    vapply(function(grp){
+      grp <- as.matrix(grp)
+      sum(sweep(grp, 2, colMeans(grp))^2)
+    }, numeric(1)) |>
+    sum()
+  bss <- tss - wss
+  sil <- cluster::silhouette(cluster_int, stats::dist(pc_matrix))
+  list(
+    n_units = nrow(pc_matrix),
+    k = length(unique(cluster_int)),
+    tss = tss,
+    wss = wss,
+    bss = bss,
+    pct_explained = bss / tss,
+    mean_silhouette = mean(sil[, 'sil_width'])
+  )
+}

@@ -264,6 +264,18 @@ directories:
     path: '~/repos/respond-map-prep/archive/mwi_raw_dhamis-obs'
     files:
       dhamis_cumulative_art: 'artefacts/dhamis_cumulative_art.csv.gz'
+  paper:
+    versioned: FALSE
+    path: '~/data/respond-community-profiles/figures'
+    files:
+      fig1_indicator_maps: 'fig1_indicator_maps.png'
+      fig2_profile_map: 'fig2_profile_map.png'
+      fig3_profile_indicators: 'fig3_profile_indicators.png'
+      table2_profile_summaries: 'table2_profile_summaries.csv'
+      table3_fit_by_stage: 'table3_fit_by_stage.csv'
+      descriptive_stats: 'descriptive_stats_by_setting.csv'
+      stage_a_rerun: 'stage_a_rerun_memberships.csv'
+      stage_changes: 'stage_changes.csv'
 drop_from_metro: [
   'distance_border_posts',
   'distance_towns',
@@ -280,3 +292,40 @@ iit_facilities: [
   'Kasungu District Hospital'
 ]
 community_indicators: ['mobility', 'econ_activity', 'pop_growth', 'weather']
+# Community profiles paper (inst/scripts/07_paper_figures.R). Analysis stages:
+#  A = GIS indicators only; B = community indicators added; C = expert-vetted profiles.
+paper:
+  national_covariates_version: '2026-02-16'
+  stage_versions:
+    A: '2026-02-26-no-cvs'
+    B: '2026-02-26'
+    C: '2026-03-16'
+  # Indicators in the archived stage A run that stages B and C do not use
+  stage_a_exclude: ['distance_cross_catchment']
+  stage_k:
+    Metro: 3
+    Non-metro: 5
+  # Final profiles in display order (urban to rural), with colors and short labels
+  profiles:
+    Teal: 'Urban seasonal-mobility corridor'
+    Pink: 'High-income urban'
+    Green: 'Up-and-coming suburban and peri-urban'
+    Yellow: 'Peri-urban with mobility and extreme weather'
+    Brown: 'Rural border'
+    Grey: 'Rural/remote'
+  profile_colors:
+    Teal: '#00838F'
+    Pink: '#D9489A'
+    Green: '#5DA02C'
+    Yellow: '#E0A800'
+    Brown: '#8A4F1D'
+    Grey: '#9AA3AD'
+  excluded_profiles: ['Orange']
+  fig1_indicators: [
+    'log_population_1km', 'rpi', 'landuse_agriculture', 'landuse_settlements',
+    'distance_towns', 'distance_borders'
+  ]
+  fig3_indicators: [
+    'log_population_1km', 'rpi', 'landuse_agriculture', 'distance_towns',
+    'distance_borders', 'mobility', 'econ_activity', 'pop_growth', 'weather'
+  ]

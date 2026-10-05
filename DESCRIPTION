@@ -11,6 +11,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     BAMMtools,
+    cluster,
     data.table,
     ggplot2,
     ggrepel,
