@@ -14,6 +14,8 @@ versions:
   analysis: '2026-02-26-no-cvs'
   dhamis_obs: '20260216-215744-9007e94d'
   facility_stats_output: '2026-05-26'
+  dhs_prepared: '2026-10-08'
+  dhs_analysis: '2026-10-08'
 # Most recent year/quarter of the DHAMIS ART cohort to report as 'ART Cohort size'
 art_cohort_year: 2025
 art_cohort_quarter: 4
@@ -277,6 +279,46 @@ directories:
       descriptive_stats: 'descriptive_stats_by_setting.csv'
       stage_a_rerun: 'stage_a_rerun_memberships.csv'
       stage_changes: 'stage_changes.csv'
+  # Raw DHS recodes, one folder per survey; file names are set under dhs: surveys:
+  dhs_raw:
+    versioned: FALSE
+    path: '~/data/dhs'
+  population_100m:
+    versioned: FALSE
+    path: '~/data/population'
+  dhs_prepared:
+    versioned: TRUE
+    path: '~/data/respond-community-profiles/dhs/prepared'
+    files:
+      households: '{survey}/households.csv'
+      adults: '{survey}/adults.csv'
+      clusters: '{survey}/clusters.gpkg'
+      location_probs: '{survey}/cluster_catchment_probabilities.csv'
+      cluster_summary: '{survey}/cluster_profile_summary.csv'
+      profile_catchments: '{survey}/profile_catchments.csv'
+      prep_log: '{survey}/prep_log.csv'
+  dhs_analysis:
+    versioned: TRUE
+    path: '~/data/respond-community-profiles/dhs/analysis'
+    files:
+      estimates: '{survey}/dhs_profile_estimates.csv'
+      contrasts: '{survey}/dhs_profile_contrasts.csv'
+      quintiles: '{survey}/dhs_profile_wealth_quintiles.csv'
+      sample_sizes: '{survey}/dhs_profile_sample_sizes.csv'
+      sensitivity: '{survey}/dhs_profile_estimates_naive_assignment.csv'
+      estimates_by_draw: '{survey}/dhs_profile_estimates_by_draw.csv.gz'
+      summary_table_docx: '{survey}/dhs_profile_summary_table.docx'
+      summary_table_csv: '{survey}/dhs_profile_summary_table.csv'
+      fig_indicators: '{survey}/fig_dhs_indicators.png'
+      fig_work_by_sex: '{survey}/fig_dhs_work_by_sex.png'
+      fig_quintiles: '{survey}/fig_dhs_wealth_quintiles.png'
+      fig_wealth_density: '{survey}/fig_dhs_wealth_density.png'
+      fig_lorenz: '{survey}/fig_dhs_lorenz.png'
+      fig_contrasts: '{survey}/fig_dhs_contrasts.png'
+      fig_cluster_map: '{survey}/fig_dhs_cluster_map.png'
+      fig_sensitivity: '{survey}/fig_dhs_sensitivity.png'
+      writeup_md: 'dhs_profile_indicators_writeup.md'
+      writeup_docx: 'dhs_profile_indicators_writeup.docx'
 drop_from_metro: [
   'distance_border_posts',
   'distance_towns',
@@ -341,3 +383,71 @@ paper:
     'log_population_1km', 'rpi', 'landuse_agriculture', 'distance_towns',
     'distance_borders', 'mobility', 'econ_activity', 'pop_growth', 'weather'
   ]
+# DHS indicators by community profile (inst/scripts/dhs/). Direct, design-based domain
+#  estimates; cluster-to-catchment membership is multiply imputed from the DHS GPS
+#  displacement model with a population prior.
+dhs:
+  age_range: [15, 49]
+  # Surveys to analyse. Paths are relative to the dhs_raw and population_100m folders.
+  #  Displacement is restricted to the survey's sampling districts: `restriction_level`
+  #  is the Naomi area level of matching polygons, `district_source` says where each
+  #  cluster's district comes from (GE `ADM1NAME` or an HR variable), and
+  #  `district_fixes` maps lower-case, letters-only names of clusters and polygons onto
+  #  common names.
+  surveys:
+    mwi_2024:
+      label: 'Malawi DHS 2024'
+      short_label: '2024'
+      raw_dir: 'mwi_2024/raw'
+      hr: 'MWHR81DT/MWHR81FL.dta'
+      ir_dat: 'MWIR81/MWIR81.dat'
+      ir_dcf: 'MWIR81/MWIR81.dcf'
+      mr_dat: 'MWMR81/MWMR81.dat'
+      mr_dcf: 'MWMR81/MWMR81.dcf'
+      ge: 'MWGE81FL/MWGE81FL.shp'
+      population: 'mwi_pop_2024_CN_100m_R2025A_v1.tif'
+      restriction_level: 5
+      district_source: 'ge'
+      district_fixes:
+        mzimbanorth: 'mzimba'
+        mzimbasouth: 'mzimba'
+        dowacamps: 'dowa'
+    mwi_2016:
+      label: 'Malawi DHS 2015-16'
+      short_label: '2015-16'
+      raw_dir: 'mwi_2016/raw'
+      hr: 'MWHR7ADT/MWHR7AFL.DTA'
+      ir_dat: 'MWIR7A/MWIR7A.DAT'
+      ir_dcf: 'MWIR7A/MWIR7A.DCF'
+      mr_dat: 'MWMR7A/MWMR7A.DAT'
+      mr_dcf: 'MWMR7A/MWMR7A.DCF'
+      ge: 'MWGE7AFL/MWGE7AFL.shp'
+      population: 'mwi_pop_2016_CN_100m_R2025A_v1.tif'
+      restriction_level: 3
+      district_source: 'shdist'
+      district_fixes:
+        lilongwerural: 'lilongwe'
+        lilongwecity: 'lilongwe'
+        zombarural: 'zomba'
+        zombacity: 'zomba'
+        blantyrerural: 'blantyre'
+        blantyrecity: 'blantyre'
+        mzuzucity: 'mzimba'
+        chradzulu: 'chiradzulu'
+        mulange: 'mulanje'
+        ndanje: 'nsanje'
+  n_imputations: 100
+  seed: 20261008
+  displacement:
+    urban_max_m: 2000
+    rural_max_m: 5000
+    rural_far_max_m: 10000
+    rural_far_prob: 0.01
+    n_samples: 20000
+  # Profiles with fewer expected clusters than these are flagged as unreliable or for
+  #  caution: design-based variances rest on very few degrees of freedom
+  unreliable_clusters: 5
+  min_clusters: 10
+  # DHS reporting convention for unweighted denominators
+  suppress_n: 25
+  caution_n: 50
