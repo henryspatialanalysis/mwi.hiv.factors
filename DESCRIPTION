@@ -12,6 +12,7 @@ Depends:
 Imports:
     BAMMtools,
     cluster,
+    convey,
     data.table,
     ggplot2,
     ggrepel,
@@ -19,9 +20,12 @@ Imports:
     mbg,
     scales,
     sf,
+    survey,
     terra,
+    utils,
     viridisLite
 Suggests:
+    haven,
     openxlsx2,
     readstata13,
     versioning
