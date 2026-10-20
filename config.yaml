@@ -16,6 +16,8 @@ versions:
   facility_stats_output: '2026-05-26'
   dhs_prepared: '2026-10-08'
   dhs_analysis: '2026-10-08'
+  mphia_analysis: '2026-10-19'
+  mphia_mbg: '2026-10-20'
 # Most recent year/quarter of the DHAMIS ART cohort to report as 'ART Cohort size'
 art_cohort_year: 2025
 art_cohort_quarter: 4
@@ -112,6 +114,8 @@ directories:
     files:
       config: 'config.yaml'
       facility_stats_crosswalk: 'inst/scripts/facility_stats/facility_name_crosswalk.csv'
+      burke_2022_published: 'inst/extdata/burke_2022_mphia_blantyre.csv'
+      close_basemap_style: 'inst/extdata/close_basemap_style.json'
   global_shp:
     versioned: FALSE
     path: '/mnt/c//Users/Lenovo/OneDrive - Henry Spatial Analysis LLC/Clients/DHS/Sharing/Updated GAUL shapefile'
@@ -283,6 +287,38 @@ directories:
   dhs_raw:
     versioned: FALSE
     path: '~/data/dhs'
+  # MBG runs (inst/scripts/mphia/02-04). Version 2026-10-20 uses the 1 km range prior;
+  #  the 10 km-prior run is archived under mphia_analysis/2026-10-19/mbg
+  mphia_mbg:
+    versioned: TRUE
+    path: '~/data/respond-community-profiles/mphia/mbg'
+    files:
+      mbg_input: 'inputs/{district}_{survey}_{outcome}.csv'
+      mbg_predictions: '{variant}/predictions/{district}_{survey}_{outcome}.tif'
+      mbg_hyperparameters: '{variant}/fit_stats/{district}_{survey}_{outcome}_hyperparameters.csv'
+      mbg_validity: '{variant}/fit_stats/{district}_{survey}_{outcome}_validity.csv'
+      mbg_map: '{variant}/maps/{district}_{survey}_{outcome}_{stat}.png'
+      mbg_points_map: 'input_maps/{district}_{survey}_{outcome}_points.png'
+      mbg_comparison: 'mbg_variant_comparison.csv'
+      mbg_comparison_fig: 'mbg_variant_ci_width.png'
+  # Cached basemap vector tiles, as {z}/{x}/{y}.pbf
+  vector_tile_cache:
+    versioned: FALSE
+    path: '~/data/tile_cache/stadia_openmaptiles'
+  # Raw MPHIA public-release files, one folder per survey; file names are set under
+  #  mphia: surveys:
+  mphia_raw:
+    versioned: FALSE
+    path: '~/data/mphia'
+  mphia_analysis:
+    versioned: TRUE
+    path: '~/data/respond-community-profiles/mphia/analysis'
+    files:
+      estimates: 'mphia_city_wealth_hiv_estimates.csv'
+      trends: 'mphia_city_wealth_hiv_trends.csv'
+      profile_estimates: 'mphia_lilongwe_profile_estimates.csv'
+      workbook: 'mphia_city_wealth_hiv.xlsx'
+      sensitivity_workbook: 'mphia_city_wealth_hiv_district_vs_city.xlsx'
   population_100m:
     versioned: FALSE
     path: '~/data/population'
@@ -451,3 +487,135 @@ dhs:
   # DHS reporting convention for unweighted denominators
   suppress_n: 25
   caution_n: 50
+# HIV prevalence by within-city wealth quintile from MPHIA (inst/scripts/mphia/),
+#  replicating Burke et al. (AIDS 2022) for Blantyre and extending it to Lilongwe.
+mphia:
+  # Burke et al. tested adults aged 15-64
+  age_range: [15, 64]
+  age_breaks: [15, 25, 35, 50, 65]
+  surveys:
+    mphia_2015:
+      label: 'MPHIA 2015-16'
+      raw_dir: 'mphia_2015/raw'
+      bio: 'mphia2015adultbio.dta'
+      hh: 'mphia2015hh.dta'
+      centroids: 'mphia2015centroids.csv'
+    mphia_2020:
+      label: 'MPHIA 2020-21'
+      raw_dir: 'mphia_2020/raw'
+      bio: 'mphia2020adultbio.dta'
+      hh: 'mphia2020hh.dta'
+      centroids: 'mphia2020centroids.dta'
+  # Each city's study area follows Burke et al.: the city plus the surrounding rural
+  #  district. Values are Naomi area names at `area_level`; clusters are assigned by
+  #  their geomasked centroids.
+  area_level: 5
+  cities:
+    Blantyre:
+      City: 'Blantyre City'
+      Rural: 'Blantyre'
+    Lilongwe:
+      City: 'Lilongwe City'
+      Rural: 'Lilongwe'
+  # Published estimates to compare against
+  replication:
+    survey: 'mphia_2015'
+    city: 'Blantyre'
+  # Community profiles linked to MPHIA clusters in this city's study area
+  profile_city: 'Lilongwe'
+  # Model-based geostatistics by district (inst/scripts/mphia/02-03): intercept-only
+  #  SPDE models, no covariates. The model CRS is UTM 36S in kilometres, which keeps
+  #  the SPDE precision matrix well scaled; distances below are in km.
+  mbg:
+    crs: '+proj=utm +zone=36 +south +datum=WGS84 +units=km +no_defs'
+    resolution: 0.5
+    # A fine mesh for the small city areas, with 0.25 km inner edges to resolve ranges
+    #  near the 1 km prior threshold; vertices also sit at the cluster points
+    mesh_max_edge: [0.25, 10]
+    # District overrides: Lilongwe's mesh covers the convex hull of a large, irregular
+    #  district (201k vertices at 0.25 km, 122k at 0.5 km), beyond the 24 GB WSL memory
+    #  cap; at 1 km it has ~31k vertices
+    mesh_max_edge_by_district:
+      Lilongwe: [1, 10]
+    mesh_cutoff: 0.2
+    # P(range < 1 km) = 0.05; other priors use the mbg defaults (run 2026-10-19 used
+    #  10 km)
+    prior_spde_range:
+      threshold: 1
+      prob_below: 0.05
+    n_samples: 1000
+    ui_width: 0.8
+    seed: 20261020
+    # Surveys and model versions fit and mapped in this run (02-04 scripts)
+    run_surveys: ['mphia_2020']
+    run_variants: ['no_nugget']
+    # Districts fit by 02_mbg_fit.R; maps and comparisons cover every district
+    run_districts: ['Lilongwe']
+    # Model versions; the nugget is included or dropped in both fitting and prediction
+    variants:
+      nugget:
+        label: 'With nugget'
+        use_nugget: true
+      no_nugget:
+        label: 'No nugget'
+        use_nugget: false
+    outcomes:
+      hiv:
+        label: 'HIV prevalence, adults 15-64'
+        palette: 'RdPu'
+      wealth_top40:
+        label: 'Households in the top two wealth quintiles'
+        palette: 'Greens'
+    ci_palette: 'SunsetDark'
+    map:
+      # Close (wtm.frontend) basemap: Stadia OpenMapTiles vector tiles drawn with the
+      #  Close style (copied to the package from wtm.frontend
+      #  src/data/osm_tiles_style.json, commit e1f39eb). Style layers in `below` sit
+      #  under the outcome and those in `above` over it, as in wtm.frontend
+      #  src/data/constants.ts. The API key is read from this environment variable.
+      basemap:
+        tile_url: 'https://tiles.stadiamaps.com/data/openmaptiles/{z}/{x}/{y}.pbf'
+        api_key_env: 'STADIA_API_KEY'
+        # Close sets the map paper colour in CSS (--color-map-paper), not in the style
+        background: '#d9ddd5'
+        # Features are drawn at the zoom matching the printed scale plus this offset;
+        #  labels come from tiles a further `label_zoom_offset` levels in, for more
+        #  place and road names
+        base_zoom_offset: 1
+        label_zoom_offset: 2
+        # OpenMapTiles is built to zoom 14; deeper zooms repeat its features
+        max_tile_zoom: 14
+        # Label layers and sizes follow the style at this zoom: the Close style hides
+        #  village and other place names from zoom 14, where its labels turn to streets
+        label_style_zoom: 13
+        label_scale: 1
+        # Half-width lines, as if the one-level-in features were rendered at 2x
+        line_scale: 0.5
+        italic_font: '~/data/fonts/figtree/Figtree-Italic.ttf'
+        citation: 'Basemap: (c) Stadia Maps (c) OpenMapTiles (c) OpenStreetMap contributors'
+        below: [
+          'landcover_ice_shelf', 'landcover_glacier', 'landuse_residential',
+          'landcover_wood', 'landcover_park'
+        ]
+        above: [
+          'water', 'waterway', 'building', 'boundary_state', 'boundary_country',
+          'tunnel_motorway_inner', 'highway_path', 'highway_minor', 'highway_major_inner',
+          'highway_major_subtle', 'highway_motorway_inner', 'highway_motorway_subtle',
+          'railway_service', 'railway_service_dashline', 'railway', 'railway_dashline',
+          'aeroway_line', 'highway_motorway_bridge_inner', 'highway_name_other',
+          'water_name_line', 'water_name_nonocean', 'water_name_ocean', 'place_other',
+          'highway_name_major', 'highway_shield_other', 'highway_shield_us_other',
+          'highway_shield_us_interstate', 'place_suburb', 'place_village', 'place_town',
+          'place_city', 'place_city_large', 'place_state', 'place_country_other',
+          'place_country_major'
+        ]
+      # Maps are framed on the city, padded by this share of its longer side; the
+      #  district outline shows where it falls inside the frame
+      extent: 'city'
+      extent_buffer: 0.25
+      raster_alpha: 0.7
+      district_line: {width_px: 2, color: '#000000', linetype: 'solid'}
+      city_line: {width_px: 2, color: '#000066', linetype: 'dashed'}
+      width_in: 7
+      height_in: 7.5
+      dpi: 200
