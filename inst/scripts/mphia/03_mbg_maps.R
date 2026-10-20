@@ -120,7 +120,10 @@ study_areas <- lapply(districts, function(district_name){
     basemap = close_basemap_layers(
       style_path = config$get_file_path('repo', 'close_basemap_style'),
       below = unlist(basemap_settings$below),
-      above = unlist(basemap_settings$above),
+      above = setdiff(
+        unlist(basemap_settings$above),
+        unlist(basemap_settings$drop_layers_by_district[[district_name]])
+      ),
       bbox = bbox,
       width_in = map_settings$width_in,
       base_zoom = base_zoom,

@@ -592,6 +592,10 @@ mphia:
         # Half-width lines, as if the one-level-in features were rendered at 2x
         line_scale: 0.5
         italic_font: '~/data/fonts/figtree/Figtree-Italic.ttf'
+        # Style layers left out for some districts: in Lilongwe, point water names label
+        #  sewage ponds and pools prominently over the city
+        drop_layers_by_district:
+          Lilongwe: ['water_name_nonocean']
         citation: 'Basemap: (c) Stadia Maps (c) OpenMapTiles (c) OpenStreetMap contributors'
         below: [
           'landcover_ice_shelf', 'landcover_glacier', 'landuse_residential',
