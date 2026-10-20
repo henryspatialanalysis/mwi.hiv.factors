@@ -549,8 +549,9 @@ mphia:
     # Surveys and model versions fit and mapped in this run (02-04 scripts)
     run_surveys: ['mphia_2020']
     run_variants: ['no_nugget']
-    # Districts fit by 02_mbg_fit.R; maps and comparisons cover every district
-    run_districts: ['Lilongwe']
+    # Districts and outcomes fit by 02_mbg_fit.R; maps and comparisons cover all of them
+    run_districts: ['Blantyre', 'Lilongwe']
+    run_outcomes: ['wealth_top20']
     # Model versions; the nugget is included or dropped in both fitting and prediction
     variants:
       nugget:
@@ -559,13 +560,18 @@ mphia:
       no_nugget:
         label: 'No nugget'
         use_nugget: false
+    # Outcomes are binary, by adult or household; household wealth outcomes are being
+    #  in `min_quintile` or above, with quintiles cut within each district and survey
     outcomes:
       hiv:
         label: 'HIV prevalence, adults 15-64'
         palette: 'RdPu'
-      wealth_top40:
-        label: 'Households in the top two wealth quintiles'
+        unit: 'adult'
+      wealth_top20:
+        label: 'Households in the top wealth quintile'
         palette: 'Greens'
+        unit: 'household'
+        min_quintile: 5
     ci_palette: 'SunsetDark'
     map:
       # Close (wtm.frontend) basemap: Stadia OpenMapTiles vector tiles drawn with the

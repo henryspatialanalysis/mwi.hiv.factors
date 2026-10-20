@@ -7,9 +7,9 @@
 ## PURPOSE: Fit intercept-only SPDE models with the mbg package, separately for each
 ##   district (Lilongwe, Blantyre), survey (MPHIA 2015-16, 2020-21), and outcome:
 ##   - hiv: HIV prevalence among tested adults aged 15-64
-##   - wealth_top40: share of households in the top two wealth quintiles, with
-##     quintiles cut within each district and survey across households with a wealth
-##     score, weighted by the household weight
+##   - household wealth outcomes (`mphia: mbg: outcomes`): share of households in or
+##     above a wealth quintile, with quintiles cut within each district and survey
+##     across households with a wealth score, weighted by the household weight
 ##   Each model uses only the clusters whose geomasked centroids fall in the district
 ##   (the city plus the rural district) and predicts on a 500 m grid over the district.
 ##
@@ -26,7 +26,8 @@
 ##     hyperparameter posteriors and mesh sizes
 ##   - {variant}/fit_stats/{district}_{survey}_{outcome}_validity.csv: in-sample RMSE,
 ##     log posterior density, and WAIC
-##   Only districts in `run_districts` are fit; the others' outputs are left in place.
+##   Only districts in `run_districts` and outcomes in `run_outcomes` are fit; other
+##   models' outputs are left in place.
 ##
 ## #######################################################################################
 
@@ -83,21 +84,20 @@ for(sid in survey_ids){
   households <- merge(households, area_lookup, by = 'area_name')
   # Quintiles are cut within each district and survey
   households[, wealth_quintile := mphia_wealth_quintiles(.SD), by = district]
-  households[, wealth_top40 := as.integer(wealth_quintile >= 4L)]
+  outcome_settings <- mbg_settings$outcomes
+  for(oo in names(outcome_settings)){
+    min_q <- outcome_settings[[oo]]$min_quintile
+    if(!is.null(min_q)) households[, (oo) := as.integer(wealth_quintile >= min_q)]
+  }
 
   for(district_name in districts){
-    inputs[[length(inputs) + 1]] <- list(
-      district = district_name, survey_id = sid, outcome = 'hiv',
-      data = mphia_mbg_input(
-        adults[district == district_name], 'hiv', mbg_settings$crs
+    for(oo in names(outcome_settings)){
+      units <- if(outcome_settings[[oo]]$unit == 'household') households else adults
+      inputs[[length(inputs) + 1]] <- list(
+        district = district_name, survey_id = sid, outcome = oo,
+        data = mphia_mbg_input(units[district == district_name], oo, mbg_settings$crs)
       )
-    )
-    inputs[[length(inputs) + 1]] <- list(
-      district = district_name, survey_id = sid, outcome = 'wealth_top40',
-      data = mphia_mbg_input(
-        households[district == district_name], 'wealth_top40', mbg_settings$crs
-      )
-    )
+    }
   }
 }
 
@@ -126,10 +126,12 @@ for(item in inputs){
 }
 fit_districts <- unlist(mbg_settings$run_districts)
 if(is.null(fit_districts)) fit_districts <- districts
+fit_outcomes <- unlist(mbg_settings$run_outcomes)
+if(is.null(fit_outcomes)) fit_outcomes <- names(mbg_settings$outcomes)
 for(variant in variants){
   use_nugget <- mbg_settings$variants[[variant]]$use_nugget
   for(item in inputs){
-    if(!item$district %in% fit_districts) next
+    if(!item$district %in% fit_districts || !item$outcome %in% fit_outcomes) next
     ids <- list(
       district = item$district, survey = item$survey_id, outcome = item$outcome
     )
