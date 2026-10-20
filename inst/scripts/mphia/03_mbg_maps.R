@@ -19,6 +19,9 @@
 ##   Colour limits are shared across model versions, districts, and surveys for each
 ##   outcome and map type; mean and point maps of an outcome share one scale.
 ##
+##   Usage: Rscript 03_mbg_maps.R [mean] [ci_width] [points], drawing only the map types
+##   named, or all of them by default.
+##
 ##   Outputs (mphia_mbg directory):
 ##   - {variant}/maps/{district}_{survey}_{outcome}_{stat}.png
 ##   - input_maps/{district}_{survey}_{outcome}_points.png
@@ -56,11 +59,24 @@ runs <- data.table::CJ(
   variant = variants, district = districts, survey = survey_ids, outcome = outcomes,
   sorted = FALSE
 )
-predictions <- lapply(seq_len(nrow(runs)), function(ii){
-  terra::rast(path_for(
+# Map types to draw: all, unless named on the command line (mean, ci_width, points)
+map_stats <- commandArgs(trailingOnly = TRUE)
+if(length(map_stats) == 0) map_stats <- c('mean', 'ci_width', 'points')
+
+# Model surfaces, where they exist; maps of model estimates require them
+prediction_files <- vapply(seq_len(nrow(runs)), function(ii){
+  path_for(
     'mbg_predictions', variant = runs$variant[ii],
     district = runs$district[ii], survey = runs$survey[ii], outcome = runs$outcome[ii]
-  ))
+  )
+}, character(1))
+if(any(c('mean', 'ci_width') %in% map_stats) && !all(file.exists(prediction_files))){
+  stop('Missing model surfaces: ', paste(basename(prediction_files[
+    !file.exists(prediction_files)
+  ]), collapse = ', '))
+}
+predictions <- lapply(prediction_files, function(f){
+  if(file.exists(f)) terra::rast(f) else NULL
 })
 points <- lapply(seq_len(nrow(inputs)), function(ii){
   data.table::fread(path_for(
@@ -72,9 +88,19 @@ points <- lapply(seq_len(nrow(inputs)), function(ii){
 })
 
 # Shared colour limits by outcome: mean and point maps share the range of the mean
-#  surfaces (points beyond it are squished); CI width maps start at zero
+#  surfaces (points beyond it are squished); CI width maps start at zero. Outcomes
+#  without model surfaces take the range of the observed cluster values.
 limits <- lapply(outcomes, function(oo){
   idx <- which(runs$outcome == oo)
+  if(any(vapply(predictions[idx], is.null, logical(1)))){
+    observed <- unlist(lapply(which(inputs$outcome == oo), function(jj){
+      points[[jj]]$observed
+    }))
+    return(list(
+      mean = c(floor(min(observed) * 20) / 20, ceiling(max(observed) * 20) / 20),
+      ci_width = NULL
+    ))
+  }
   mean_max <- max(vapply(idx, function(ii){
     terra::global(predictions[[ii]]$mean, 'max', na.rm = TRUE)[[1]]
   }, numeric(1)))
@@ -192,7 +218,7 @@ draw_map <- function(district, survey, outcome, stat, title_suffix, out_file, ..
 # Model estimates, by version
 for(ii in seq_len(nrow(runs))){
   run <- runs[ii]
-  for(stat in c('mean', 'ci_width')){
+  for(stat in intersect(c('mean', 'ci_width'), map_stats)){
     draw_map(
       district = run$district, survey = run$survey, outcome = run$outcome, stat = stat,
       title_suffix = paste0(' (', tolower(mbg_settings$variants[[run$variant]]$label), ')'),
@@ -206,7 +232,8 @@ for(ii in seq_len(nrow(runs))){
 }
 
 # Model inputs
-for(ii in seq_len(nrow(inputs))){
+input_rows <- if('points' %in% map_stats) seq_len(nrow(inputs)) else integer(0)
+for(ii in input_rows){
   run <- inputs[ii]
   draw_map(
     district = run$district, survey = run$survey, outcome = run$outcome,
