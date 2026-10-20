@@ -26,8 +26,14 @@ Imports:
     viridisLite
 Suggests:
     haven,
+    INLA,
+    jsonlite,
     openxlsx2,
+    ragg,
+    rcartocolor,
     readstata13,
+    shadowtext,
+    systemfonts,
     versioning
 License: MIT + file LICENSE
 Encoding: UTF-8
