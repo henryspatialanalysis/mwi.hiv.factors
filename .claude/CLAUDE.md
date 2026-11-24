@@ -46,6 +46,8 @@ Scripts in `inst/scripts/` are numbered and run sequentially:
 6. `04_cluster_viz.R` — visualization of cluster results
 7. `05_gvh_regressions_by_archetype.R` — regression analysis by archetype
 8. `06_within_profile_variation.R` — analyze variation within profiles
+9. `07_paper_figures.R` — figures and tables for the community profiles paper
+10. `08_phase_sankey.R` — Sankey diagram of facility groupings from district through Phases A, B, and C (run after `07`; "phases" are the `paper` block's "stages"). Group order is saved in `FIXED_ORDERS`; set columns to `NULL` to search again if groupings change
 
 Each script sets `REPO_DIR <- '~/repos/mwi.hiv.factors'` at the top and loads config via:
 ```r
