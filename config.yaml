@@ -283,6 +283,9 @@ directories:
       descriptive_stats: 'descriptive_stats_by_setting.csv'
       stage_a_rerun: 'stage_a_rerun_memberships.csv'
       stage_changes: 'stage_changes.csv'
+      fig_phase_sankey: 'fig_phase_sankey.png'
+      fig_phase_sankey_pdf: 'fig_phase_sankey.pdf'
+      phase_sankey_data: 'phase_sankey_memberships.csv'
   # Raw DHS recodes, one folder per survey; file names are set under dhs: surveys:
   dhs_raw:
     versioned: FALSE
@@ -371,7 +374,8 @@ iit_facilities: [
   'Kasungu District Hospital'
 ]
 community_indicators: ['mobility', 'econ_activity', 'pop_growth', 'weather']
-# Community profiles paper (inst/scripts/07_paper_figures.R). Analysis stages:
+# Community profiles paper (inst/scripts/07_paper_figures.R and 08_phase_sankey.R, which
+#  calls the stages "phases"). Analysis stages:
 #  A = GIS indicators only; B = community indicators added; C = expert-vetted profiles.
 paper:
   national_covariates_version: '2026-02-16'
